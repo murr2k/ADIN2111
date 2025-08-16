@@ -1,0 +1,63 @@
+# Git Attributes for ADIN2111 Linux Driver
+# Author: Murray Kopit  
+# Date: August 11, 2025
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source files
+*.c text eol=lf
+*.h text eol=lf
+*.S text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.bash text eol=lf
+*.py text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+README* text eol=lf
+
+# Configuration files
+Makefile text eol=lf
+Kconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Device tree files
+*.dts text eol=lf
+*.dtsi text eol=lf
+*.dtb binary
+
+# Binary files
+*.ko binary
+*.o binary
+*.a binary
+*.so binary
+*.bin binary
+*.fw binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+
+# Archives
+*.tar binary
+*.gz binary
+*.zip binary
+*.7z binary
+
+# GitHub Linguist overrides
+drivers/net/ethernet/adi/adin2111/*.c linguist-language=C
+drivers/net/ethernet/adi/adin2111/*.h linguist-language=C
+tests/**/*.c linguist-language=C
+docs/*.md linguist-documentation
+*.yaml linguist-detectable=true

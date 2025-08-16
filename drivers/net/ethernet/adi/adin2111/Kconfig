@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: GPL-2.0+
+# ADIN2111 Driver Configuration
+# Author: Murray Kopit
+# Date: August 11, 2025
+
+config ADIN2111
+	tristate "Analog Devices ADIN2111 Dual-Port Ethernet Switch"
+	depends on SPI
+	select REGMAP_SPI
+	select PHYLIB
+	select CRC32
+	help
+	  This driver supports the Analog Devices ADIN2111 dual-port
+	  10BASE-T1L Ethernet switch with integrated PHYs and SPI interface.
+
+	  The driver can operate in two modes:
+	  - Switch mode: Hardware switching between ports (default)
+	  - Dual MAC mode: Separate network interfaces for each port
+
+	  To compile this driver as a module, choose M here. The module
+	  will be called adin2111.
+
+config ADIN2111_SWITCH_MODE
+	bool "Enable hardware switch mode by default"
+	depends on ADIN2111
+	default y
+	help
+	  Enable hardware switch mode by default. In this mode, the
+	  ADIN2111 performs autonomous switching between its two ports
+	  without host involvement, reducing CPU load and latency.
+
+	  This can be overridden via module parameter or device tree.
+
+config ADIN2111_DEBUG
+	bool "Enable debug messages"
+	depends on ADIN2111
+	help
+	  Enable verbose debug messages for the ADIN2111 driver.
+	  This is useful for development and troubleshooting.
