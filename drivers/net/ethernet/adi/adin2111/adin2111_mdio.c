@@ -108,10 +108,10 @@ out:
 	return ret;
 }
 
-static void adin2111_link_change(struct phy_device *phydev)
+static void adin2111_link_change(struct net_device *netdev)
 {
-	struct adin2111_port *port = phydev->priv;
-	struct net_device *netdev = port->netdev;
+	struct adin2111_port *port = netdev_priv(netdev);
+	struct phy_device *phydev = port->phydev;
 
 	phy_print_status(phydev);
 

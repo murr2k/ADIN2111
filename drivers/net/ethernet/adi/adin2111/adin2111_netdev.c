@@ -17,8 +17,8 @@
 #include "adin2111_regs.h"
 
 /* External function declarations */
-extern int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, void *data, size_t len);
-extern int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const void *data, size_t len);
+extern int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
+extern int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
 
 static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 {
@@ -143,9 +143,9 @@ static void adin2111_get_stats64(struct net_device *netdev,
 {
 	struct adin2111_port *port = netdev_priv(netdev);
 
-	spin_lock(&port->state_lock);
+	spin_lock(&port->stats_lock);
 	*stats = port->stats;
-	spin_unlock(&port->state_lock);
+	spin_unlock(&port->stats_lock);
 }
 
 static int adin2111_set_mac_address(struct net_device *netdev, void *addr)
@@ -168,20 +168,20 @@ static int adin2111_set_mac_address(struct net_device *netdev, void *addr)
 		u32 mac_lower = (netdev->dev_addr[2] << 24) | (netdev->dev_addr[3] << 16) |
 				(netdev->dev_addr[4] << 8) | netdev->dev_addr[5];
 
-		ret = adin2111_write_reg(priv, ADIN2111_ADDR_FILT_UPR, mac_upper);
+		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_UPR, mac_upper);
 		if (ret)
 			return ret;
 
-		ret = adin2111_write_reg(priv, ADIN2111_ADDR_FILT_LWR, mac_lower);
+		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_LWR, mac_lower);
 		if (ret)
 			return ret;
 
 		/* Enable MAC filtering */
-		ret = adin2111_write_reg(priv, ADIN2111_ADDR_MSK_UPR, 0xFFFF);
+		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_UPR, 0xFFFF);
 		if (ret)
 			return ret;
 
-		ret = adin2111_write_reg(priv, ADIN2111_ADDR_MSK_LWR, 0xFFFFFFFF);
+		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_LWR, 0xFFFFFFFF);
 		if (ret)
 			return ret;
 	}
@@ -284,11 +284,11 @@ void adin2111_rx_handler(struct adin2111_priv *priv)
 	/* Determine target port */
 	if (priv->switch_mode) {
 		port_num = (port_mask & BIT(1)) ? 1 : 0;
-		if (port_num >= ADIN2111_MAX_PORTS || !priv->ports[port_num]) {
+		if (port_num >= ADIN2111_PORTS || !priv->ports[port_num].netdev) {
 			dev_err(&priv->spi->dev, "Invalid port in frame header: %d\n", port_num);
 			goto out;
 		}
-		port = priv->ports[port_num];
+		port = &priv->ports[port_num];
 		netdev = port->netdev;
 	} else {
 		netdev = priv->netdev;
@@ -337,7 +337,7 @@ struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_n
 	port->netdev = netdev;
 	port->priv = priv;
 	port->port_num = port_num;
-	spin_lock_init(&port->state_lock);
+	spin_lock_init(&port->stats_lock);
 
 	/* Set device name */
 	if (priv->switch_mode) {
