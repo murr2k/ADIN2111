@@ -92,13 +92,13 @@ jobs:
         make KERNEL_VERSION=${{ matrix.kernel }} || make
         
         # Verify module was built
-        if [ ! -f adin2111.ko ]; then
+        if [ ! -f adin2111_driver.ko ]; then
           echo "Error: Module build failed"
           exit 1
         fi
         
         # Get module info
-        modinfo adin2111.ko
+        modinfo adin2111_driver.ko
         
     - name: Build test modules
       run: |
@@ -129,12 +129,12 @@ jobs:
         
         # Try to load our module (may fail without real hardware)
         cd drivers/net/ethernet/adi/adin2111
-        sudo insmod adin2111.ko 2>/dev/null || {
+        sudo insmod adin2111_driver.ko 2>/dev/null || {
           echo "Module load failed (expected without hardware), continuing with mock tests"
         }
         
         # Check if module loaded
-        if lsmod | grep -q adin2111; then
+        if lsmod | grep -q adin2111_driver; then
           echo "Module loaded successfully"
           # Get module parameters
           cat /sys/module/adin2111/parameters/* 2>/dev/null || true
@@ -277,7 +277,7 @@ jobs:
       if: always()
       run: |
         # Unload module if loaded
-        sudo rmmod adin2111 2>/dev/null || true
+        sudo rmmod adin2111_driver 2>/dev/null || true
         
         # Clean up network namespaces
         sudo ip netns delete test_ns1 2>/dev/null || true
