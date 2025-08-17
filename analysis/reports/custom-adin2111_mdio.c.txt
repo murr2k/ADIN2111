@@ -1,0 +1,64 @@
+Custom analysis for adin2111_mdio.c
+===============================
+
+Checking for missing error handling...
+51:	val = FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_ST, ADIN2111_MDIO_ST_CLAUSE_22) |
+92:	mdio_val = FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_ST, ADIN2111_MDIO_ST_CLAUSE_22) |
+113:	struct adin2111_port *port = netdev_priv(netdev);
+136:	phydev = phy_connect(port->netdev, phy_id, adin2111_link_change,
+163:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
+
+Checking for potential memory leaks...
+163:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
+
+Checking for hardcoded values...
+3: * ADIN2111 Dual Port Industrial Ethernet Switch/PHY
+6: * Copyright 2024 Analog Devices Inc.
+14:#include "adin2111.h"
+15:#include "adin2111_regs.h"
+17:static int adin2111_mdio_wait_ready(struct adin2111_priv *priv)
+19:	unsigned long timeout = jiffies + msecs_to_jiffies(ADIN2111_MDIO_TIMEOUT_MS);
+24:		ret = adin2111_read_reg(priv, ADIN2111_MDIO_ACC, &val);
+28:		if (!(val & ADIN2111_MDIO_ACC_MDIO_TRCNT))
+37:int adin2111_mdio_read(struct mii_bus *bus, int addr, int regnum)
+39:	struct adin2111_priv *priv = bus->priv;
+46:	ret = adin2111_mdio_wait_ready(priv);
+51:	val = FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_ST, ADIN2111_MDIO_ST_CLAUSE_22) |
+52:	      FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_OP, ADIN2111_MDIO_OP_RD) |
+53:	      FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_PRTAD, addr) |
+54:	      FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_DEVAD, regnum) |
+55:	      ADIN2111_MDIO_ACC_MDIO_TRCNT;
+57:	ret = adin2111_write_reg(priv, ADIN2111_MDIO_ACC, val);
+62:	ret = adin2111_mdio_wait_ready(priv);
+67:	ret = adin2111_read_reg(priv, ADIN2111_MDIO_ACC, &val);
+71:	ret = FIELD_GET(ADIN2111_MDIO_ACC_MDIO_DATA, val);
+78:int adin2111_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
+80:	struct adin2111_priv *priv = bus->priv;
+87:	ret = adin2111_mdio_wait_ready(priv);
+92:	mdio_val = FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_ST, ADIN2111_MDIO_ST_CLAUSE_22) |
+93:		   FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_OP, ADIN2111_MDIO_OP_WR) |
+94:		   FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_PRTAD, addr) |
+95:		   FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_DEVAD, regnum) |
+96:		   FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_DATA, val) |
+97:		   ADIN2111_MDIO_ACC_MDIO_TRCNT;
+99:	ret = adin2111_write_reg(priv, ADIN2111_MDIO_ACC, mdio_val);
+104:	ret = adin2111_mdio_wait_ready(priv);
+111:static void adin2111_link_change(struct net_device *netdev)
+113:	struct adin2111_port *port = netdev_priv(netdev);
+127:static int adin2111_phy_connect_port(struct adin2111_priv *priv, int port_num)
+129:	struct adin2111_port *port = &priv->ports[port_num];
+136:	phydev = phy_connect(port->netdev, phy_id, adin2111_link_change,
+145:	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_1000baseT_Half_BIT);
+146:	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_1000baseT_Full_BIT);
+147:	phy_set_max_speed(phydev, SPEED_100);
+158:int adin2111_phy_init(struct adin2111_priv *priv, int port)
+167:	mii_bus->name = "ADIN2111 MDIO";
+168:	mii_bus->read = adin2111_mdio_read;
+169:	mii_bus->write = adin2111_mdio_write;
+187:		for (i = 0; i < ADIN2111_PORTS; i++) {
+189:				ret = adin2111_phy_connect_port(priv, i);
+200:void adin2111_phy_uninit(struct adin2111_priv *priv, int port)
+205:		for (i = 0; i < ADIN2111_PORTS; i++) {
+216:MODULE_DESCRIPTION("ADIN2111 MDIO/PHY Management");
+
+Checking for missing __iomem annotations...

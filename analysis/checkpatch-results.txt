@@ -1,0 +1,37 @@
+=== Checking drivers/net/ethernet/adi/adin2111/adin2111.c ===
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+drivers/net/ethernet/adi/adin2111/adin2111.c:27: WARNING: externs should be avoided in .c files
+drivers/net/ethernet/adi/adin2111/adin2111.c:65: WARNING: braces {} are not necessary for single statement blocks
+drivers/net/ethernet/adi/adin2111/adin2111.c:69: WARNING: braces {} are not necessary for single statement blocks
+drivers/net/ethernet/adi/adin2111/adin2111.c:73: WARNING: braces {} are not necessary for single statement blocks
+drivers/net/ethernet/adi/adin2111/adin2111.c:97: WARNING: msleep < 20ms can sleep for up to 20ms; see function description of msleep().
+drivers/net/ethernet/adi/adin2111/adin2111.c:198: ERROR: trailing whitespace
+drivers/net/ethernet/adi/adin2111/adin2111.c:271: ERROR: trailing whitespace
+drivers/net/ethernet/adi/adin2111/adin2111.c:353: WARNING: Missing a blank line after declarations
+drivers/net/ethernet/adi/adin2111/adin2111.c:356: ERROR: trailing whitespace
+drivers/net/ethernet/adi/adin2111/adin2111.c:479: WARNING: adding a line without newline at end of file
+total: 3 errors, 7 warnings, 0 checks, 479 lines checked
+=== Checking drivers/net/ethernet/adi/adin2111/adin2111_mdio.c ===
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:218: WARNING: adding a line without newline at end of file
+total: 0 errors, 1 warnings, 0 checks, 218 lines checked
+=== Checking drivers/net/ethernet/adi/adin2111/adin2111_netdev.c ===
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:21: WARNING: externs should be avoided in .c files
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:40: WARNING: Missing a blank line after declarations
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:71: WARNING: braces {} are not necessary for single statement blocks
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:78: WARNING: Missing a blank line after declarations
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:122: WARNING: Missing a blank line after declarations
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:138: CHECK: Alignment should match open parenthesis
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:339: WARNING: braces {} are not necessary for any arm of this statement
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:347: WARNING: braces {} are not necessary for any arm of this statement
+drivers/net/ethernet/adi/adin2111/adin2111_netdev.c:367: WARNING: adding a line without newline at end of file
+total: 0 errors, 8 warnings, 1 checks, 367 lines checked
+=== Checking drivers/net/ethernet/adi/adin2111/adin2111_spi.c ===
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+drivers/net/ethernet/adi/adin2111/adin2111_spi.c:154: WARNING: adding a line without newline at end of file
+total: 0 errors, 1 warnings, 0 checks, 154 lines checked

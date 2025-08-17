@@ -1,0 +1,2 @@
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory

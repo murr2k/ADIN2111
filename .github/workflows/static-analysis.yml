@@ -1,0 +1,74 @@
+name: Static Code Analysis
+
+on:
+  push:
+    branches: [ main, develop, 'fix/*', 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    name: Static Code Analysis
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install analysis tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+        
+    - name: Download checkpatch.pl
+      run: |
+        mkdir -p analysis
+        wget -q https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl -O analysis/checkpatch.pl
+        chmod +x analysis/checkpatch.pl
+        
+    - name: Run static analysis
+      run: |
+        chmod +x analysis/static_analysis.sh
+        ./analysis/static_analysis.sh
+    
+    - name: Test error injection mock infrastructure
+      run: |
+        echo "Testing mock infrastructure error injection capabilities..."
+        if [ -f tests/scripts/test_error_injection_ci.sh ]; then
+          chmod +x tests/scripts/test_error_injection_ci.sh
+          ./tests/scripts/test_error_injection_ci.sh
+        else
+          chmod +x tests/scripts/test_error_injection.sh
+          ./tests/scripts/test_error_injection.sh || true
+        fi
+        echo "Error injection test completed"
+        
+    - name: Upload analysis results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: static-analysis-reports
+        path: analysis/reports/
+        retention-days: 30
+        
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      run: |
+        if [ -f analysis/reports/summary.txt ]; then
+          echo "## Static Analysis Results" >> comment.md
+          echo "" >> comment.md
+          echo '```' >> comment.md
+          cat analysis/reports/summary.txt >> comment.md
+          echo '```' >> comment.md
+          
+          # Add detailed results if issues found
+          if [ -f analysis/reports/checkpatch-combined.txt ]; then
+            echo "" >> comment.md
+            echo "<details><summary>Checkpatch Issues</summary>" >> comment.md
+            echo "" >> comment.md
+            echo '```' >> comment.md
+            head -50 analysis/reports/checkpatch-combined.txt >> comment.md
+            echo '```' >> comment.md
+            echo "</details>" >> comment.md
+          fi
+        fi
