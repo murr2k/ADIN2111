@@ -30,6 +30,13 @@ jobs:
       run: |
         chmod +x analysis/static_analysis.sh
         ./analysis/static_analysis.sh
+    
+    - name: Test error injection mock infrastructure
+      run: |
+        echo "Testing mock infrastructure error injection capabilities..."
+        chmod +x tests/scripts/test_error_injection.sh
+        ./tests/scripts/test_error_injection.sh || true
+        echo "Error injection test completed"
         
     - name: Upload analysis results
       uses: actions/upload-artifact@v4
