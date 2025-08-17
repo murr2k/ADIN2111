@@ -415,7 +415,7 @@ err_cleanup_netdevs:
 		free_netdev(priv->netdev);
 	}
 err_cleanup_phy:
-	adin2111_phy_uninit(priv);
+	adin2111_phy_uninit(priv, 0);
 	return ret;
 }
 
@@ -443,7 +443,7 @@ void adin2111_remove(struct spi_device *spi)
 	}
 
 	/* Cleanup PHY */
-	adin2111_phy_uninit(priv);
+	adin2111_phy_uninit(priv, 0);
 
 	/* Reset device */
 	adin2111_soft_reset(priv);
