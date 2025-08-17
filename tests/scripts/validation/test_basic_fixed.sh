@@ -16,7 +16,7 @@ TEST_FRAMEWORK_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")/framework"
 # Source test framework
 source "$TEST_FRAMEWORK_DIR/test_framework.sh"
 
-# Default configuration
+# Default configuration - preserve environment variables if set
 INTERFACE="${INTERFACE:-eth0}"
 TEST_ENVIRONMENT="${TEST_ENVIRONMENT:-auto}"
 USE_MOCKS="${USE_MOCKS:-0}"
@@ -27,27 +27,32 @@ OPTIONAL_TOOLS=("bridge" "tc" "ss")
 detect_test_environment() {
     local env_type="unknown"
     
+    # Check if mocks are explicitly requested
+    if [[ "$USE_MOCKS" == "1" ]]; then
+        env_type="mock"
+        log_info "Mock testing explicitly requested" >&2
+        
     # Check for CI environment
-    if [[ -n "${CI:-}" ]] || [[ -n "${GITHUB_ACTIONS:-}" ]] || [[ -n "${BUILD_ID:-}" ]]; then
+    elif [[ -n "${CI:-}" ]] || [[ -n "${GITHUB_ACTIONS:-}" ]] || [[ -n "${BUILD_ID:-}" ]]; then
         env_type="ci"
-        log_info "Detected CI/CD environment"
+        log_info "Detected CI/CD environment" >&2
         
         # In CI, all tools should be available
         ensure_required_tools_ci
         
     elif [[ -d "/sys/class/net/$INTERFACE" ]]; then
         env_type="hardware"
-        log_info "Detected hardware environment with interface $INTERFACE"
+        log_info "Detected hardware environment with interface $INTERFACE" >&2
         
         # Check if it's a real ADIN2111 interface
         if detect_adin2111_interface "$INTERFACE"; then
             env_type="adin2111_hardware"
-            log_info "Confirmed ADIN2111 hardware interface"
+            log_info "Confirmed ADIN2111 hardware interface" >&2
         fi
         
     else
         env_type="mock"
-        log_info "No suitable interface found - using mock environment"
+        log_info "No suitable interface found - using mock environment" >&2
         USE_MOCKS=1
     fi
     
@@ -93,22 +98,52 @@ detect_adin2111_interface() {
 setup_network_mocks() {
     if [[ "$USE_MOCKS" == "1" ]]; then
         log_info "Setting up network mocks"
-        
-        # Create mock functions that simulate tool behavior
-        ethtool() { mock_ethtool "$@"; }
-        ip() { mock_ip "$@"; }
-        ping() { mock_ping "$@"; }
-        iperf3() { mock_iperf3 "$@"; }
-        
-        export -f ethtool ip ping iperf3
+        # Mocks are used through wrapper functions below
+    fi
+}
+
+# Wrapper for ethtool that uses mock when enabled
+ethtool_wrapper() {
+    if [[ "$USE_MOCKS" == "1" ]]; then
+        mock_ethtool "$@"
+    else
+        command ethtool "$@"
+    fi
+}
+
+# Wrapper for ip that uses mock when enabled  
+ip_wrapper() {
+    if [[ "$USE_MOCKS" == "1" ]]; then
+        mock_ip "$@"
+    else
+        command ip "$@"
+    fi
+}
+
+# Wrapper for ping that uses mock when enabled
+ping_wrapper() {
+    if [[ "$USE_MOCKS" == "1" ]]; then
+        mock_ping "$@"
+    else
+        command ping "$@"
+    fi
+}
+
+# Wrapper for iperf3 that uses mock when enabled
+iperf3_wrapper() {
+    if [[ "$USE_MOCKS" == "1" ]]; then
+        mock_iperf3 "$@"
+    else
+        command iperf3 "$@"
     fi
 }
 
 # Mock ethtool implementation
 mock_ethtool() {
     local interface="$1"
+    local option="${2:-}"
     
-    case "$2" in
+    case "$option" in
         "")
             # Basic ethtool info
             cat << EOF
@@ -210,12 +245,12 @@ EOF
 
 # Mock ping implementation
 mock_ping() {
-    local target="$1"
+    local target="${1:-localhost}"
     local count=4
     
-    if [[ "$2" == "-c" ]]; then
-        count="$3"
-        shift 2
+    if [[ "${2:-}" == "-c" ]]; then
+        count="${3:-4}"
+        shift 2 2>/dev/null || true
     fi
     
     cat << EOF
@@ -233,7 +268,7 @@ EOF
 
 # Mock iperf3 implementation
 mock_iperf3() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "${1:-}" == "-s" ]]; then
         # Server mode - just pretend to listen
         log_info "Mock iperf3 server started"
         sleep 1
@@ -280,11 +315,9 @@ test_link_status() {
         "adin2111_hardware"|"hardware")
             # Real hardware testing
             if ! command -v ethtool &> /dev/null; then
-                log_warn "ethtool not available - installing or using alternative method"
-                if ! install_ethtool_if_possible; then
-                    test_result "$test_name" "SKIP" "- ethtool not available and cannot install"
-                    return 0
-                fi
+                log_warn "ethtool not available - skipping hardware test"
+                test_result "$test_name" "SKIP" "- ethtool not available"
+                return 0
             fi
             
             test_link_status_with_ethtool "$INTERFACE" "$test_name"
@@ -310,7 +343,7 @@ test_link_status_with_ethtool() {
     local test_name="$2"
     local link_info
     
-    if ! link_info=$(ethtool "$interface" 2>/dev/null); then
+    if ! link_info=$(ethtool_wrapper "$interface" 2>/dev/null); then
         test_result "$test_name" "FAIL" "- ethtool command failed on $interface"
         return 1
     fi
@@ -353,7 +386,7 @@ test_driver_info() {
     fi
     
     local driver_info
-    if ! driver_info=$(ethtool -i "$INTERFACE" 2>/dev/null); then
+    if ! driver_info=$(ethtool_wrapper -i "$INTERFACE" 2>/dev/null); then
         if [[ "$env_type" == "ci" ]]; then
             test_result "$test_name" "FAIL" "- ethtool -i failed in CI environment"
             return 1
@@ -401,7 +434,7 @@ test_network_connectivity() {
     
     # Test basic connectivity (gateway)
     local gateway
-    gateway=$(ip route | grep default | awk '{print $3}' | head -1)
+    gateway=$(ip_wrapper route | grep default | awk '{print $3}' | head -1)
     
     if [[ -z "$gateway" ]]; then
         if [[ "$USE_MOCKS" == "1" ]]; then
@@ -415,12 +448,12 @@ test_network_connectivity() {
     log_info "Testing connectivity to gateway: $gateway"
     
     # Ping test with timeout
-    if ping -c 3 -W 2 "$gateway" &> /dev/null; then
+    if ping_wrapper -c 3 -W 2 "$gateway" &> /dev/null; then
         test_result "$test_name" "PASS" "- Connectivity to $gateway successful"
         
         # Additional latency test
         local ping_output
-        ping_output=$(ping -c 10 -i 0.1 "$gateway" 2>/dev/null || echo "")
+        ping_output=$(ping_wrapper -c 10 -i 0.1 "$gateway" 2>/dev/null || echo "")
         
         if [[ -n "$ping_output" ]]; then
             local avg_latency
@@ -458,8 +491,8 @@ test_interface_statistics() {
     # Get initial statistics
     local stats_before stats_after
     
-    if command -v ethtool &> /dev/null; then
-        stats_before=$(ethtool -S "$INTERFACE" 2>/dev/null || echo "")
+    if command -v ethtool &> /dev/null || [[ "$USE_MOCKS" == "1" ]]; then
+        stats_before=$(ethtool_wrapper -S "$INTERFACE" 2>/dev/null || echo "")
     fi
     
     if [[ -z "$stats_before" ]]; then
@@ -482,15 +515,15 @@ test_interface_statistics() {
     else
         # Real traffic generation
         local gateway
-        gateway=$(ip route | grep default | awk '{print $3}' | head -1)
+        gateway=$(ip_wrapper route | grep default | awk '{print $3}' | head -1)
         if [[ -n "$gateway" ]]; then
-            ping -c 5 -i 0.2 "$gateway" &> /dev/null || true
+            ping_wrapper -c 5 -i 0.2 "$gateway" &> /dev/null || true
         fi
     fi
     
     # Get final statistics
-    if command -v ethtool &> /dev/null; then
-        stats_after=$(ethtool -S "$INTERFACE" 2>/dev/null || echo "")
+    if command -v ethtool &> /dev/null || [[ "$USE_MOCKS" == "1" ]]; then
+        stats_after=$(ethtool_wrapper -S "$INTERFACE" 2>/dev/null || echo "")
     fi
     
     if [[ -z "$stats_after" ]]; then

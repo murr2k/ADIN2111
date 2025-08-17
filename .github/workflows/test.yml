@@ -146,10 +146,12 @@ jobs:
         
     - name: Run test suite
       run: |
-        # Create test runner if it doesn't exist
+        # Ensure test runner exists
         if [ ! -f tests/scripts/automation/run_all_tests.sh ]; then
-          mkdir -p tests/scripts/automation
-          cp tests/scripts/test_error_injection_ci.sh tests/scripts/automation/run_all_tests.sh
+          echo "Error: Test runner script not found!"
+          echo "Expected: tests/scripts/automation/run_all_tests.sh"
+          ls -la tests/scripts/automation/ 2>/dev/null || echo "Directory does not exist"
+          exit 1
         fi
         
         chmod +x tests/scripts/automation/run_all_tests.sh
