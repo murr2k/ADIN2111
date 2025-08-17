@@ -126,10 +126,9 @@ static void adin2111_link_change(struct phy_device *phydev)
 
 static int adin2111_phy_connect_port(struct adin2111_priv *priv, int port_num)
 {
-	struct adin2111_port *port = priv->ports[port_num];
+	struct adin2111_port *port = &priv->ports[port_num];
 	struct phy_device *phydev;
 	char phy_id[MII_BUS_ID_SIZE + 3];
-	int ret;
 
 	snprintf(phy_id, sizeof(phy_id), PHY_ID_FMT,
 		 priv->mii_bus->id, port_num + 1);
@@ -156,7 +155,7 @@ static int adin2111_phy_connect_port(struct adin2111_priv *priv, int port_num)
 	return 0;
 }
 
-int adin2111_phy_init(struct adin2111_priv *priv)
+int adin2111_phy_init(struct adin2111_priv *priv, int port)
 {
 	struct mii_bus *mii_bus;
 	int ret, i;
@@ -173,7 +172,7 @@ int adin2111_phy_init(struct adin2111_priv *priv)
 	snprintf(mii_bus->id, MII_BUS_ID_SIZE, "%s", dev_name(&priv->spi->dev));
 
 	/* Internal PHYs are at addresses 1 and 2 */
-	mii_bus->phy_mask = ~(BIT(1) | BIT(2));
+	mii_bus->phy_mask = 0xFFFFFFFC;  /* Allow only addresses 1 and 2 */
 
 	ret = devm_mdiobus_register(&priv->spi->dev, mii_bus);
 	if (ret) {
@@ -185,8 +184,8 @@ int adin2111_phy_init(struct adin2111_priv *priv)
 
 	/* Connect PHYs in switch mode */
 	if (priv->switch_mode) {
-		for (i = 0; i < ADIN2111_MAX_PORTS; i++) {
-			if (priv->ports[i]) {
+		for (i = 0; i < ADIN2111_PORTS; i++) {
+			if (priv->ports[i].netdev) {
 				ret = adin2111_phy_connect_port(priv, i);
 				if (ret)
 					return ret;
@@ -198,15 +197,15 @@ int adin2111_phy_init(struct adin2111_priv *priv)
 	return 0;
 }
 
-void adin2111_phy_cleanup(struct adin2111_priv *priv)
+void adin2111_phy_uninit(struct adin2111_priv *priv, int port)
 {
 	int i;
 
 	if (priv->switch_mode) {
-		for (i = 0; i < ADIN2111_MAX_PORTS; i++) {
-			if (priv->ports[i] && priv->ports[i]->phydev) {
-				phy_disconnect(priv->ports[i]->phydev);
-				priv->ports[i]->phydev = NULL;
+		for (i = 0; i < ADIN2111_PORTS; i++) {
+			if (priv->ports[i].netdev && priv->ports[i].phydev) {
+				phy_disconnect(priv->ports[i].phydev);
+				priv->ports[i].phydev = NULL;
 			}
 		}
 	}
