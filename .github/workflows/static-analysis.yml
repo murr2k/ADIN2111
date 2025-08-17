@@ -34,8 +34,13 @@ jobs:
     - name: Test error injection mock infrastructure
       run: |
         echo "Testing mock infrastructure error injection capabilities..."
-        chmod +x tests/scripts/test_error_injection.sh
-        ./tests/scripts/test_error_injection.sh || true
+        if [ -f tests/scripts/test_error_injection_ci.sh ]; then
+          chmod +x tests/scripts/test_error_injection_ci.sh
+          ./tests/scripts/test_error_injection_ci.sh
+        else
+          chmod +x tests/scripts/test_error_injection.sh
+          ./tests/scripts/test_error_injection.sh || true
+        fi
         echo "Error injection test completed"
         
     - name: Upload analysis results
