@@ -103,10 +103,12 @@ jobs:
     - name: Build test modules
       run: |
         # Build test framework module
-        if [ -d tests/kernel ]; then
+        if [ -d tests/kernel ] && [ -f tests/kernel/Makefile ]; then
           cd tests/kernel
           make clean
           make KERNEL_VERSION=${{ matrix.kernel }} || make
+        else
+          echo "No kernel test modules to build (Makefile not found)"
         fi
         
     - name: Setup mock SPI device
