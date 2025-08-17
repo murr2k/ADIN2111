@@ -66,9 +66,14 @@ if command_exists cppcheck; then
     
     # Count issues
     if [ -f "$ANALYSIS_DIR/reports/cppcheck-full.xml" ]; then
-        CPPCHECK_ERRORS=$(grep -c 'severity="error"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
-        CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
-        CPPCHECK_STYLE=$(grep -c 'severity="style"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
+        CPPCHECK_ERRORS=$(grep -c 'severity="error"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || true)
+        CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || true)
+        CPPCHECK_STYLE=$(grep -c 'severity="style"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || true)
+        
+        # Set to 0 if grep found nothing (empty result)
+        [ -z "$CPPCHECK_ERRORS" ] && CPPCHECK_ERRORS=0
+        [ -z "$CPPCHECK_WARNINGS" ] && CPPCHECK_WARNINGS=0
+        [ -z "$CPPCHECK_STYLE" ] && CPPCHECK_STYLE=0
     else
         CPPCHECK_ERRORS=0
         CPPCHECK_WARNINGS=0
@@ -107,8 +112,12 @@ if [ -f "$ANALYSIS_DIR/checkpatch.pl" ]; then
     
     # Count issues
     if [ -f "$ANALYSIS_DIR/reports/checkpatch-combined.txt" ]; then
-        CHECKPATCH_ERRORS=$(grep -c "ERROR:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null)
-        CHECKPATCH_WARNINGS=$(grep -c "WARNING:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null)
+        CHECKPATCH_ERRORS=$(grep -c "ERROR:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null || true)
+        CHECKPATCH_WARNINGS=$(grep -c "WARNING:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null || true)
+        
+        # Set to 0 if grep found nothing (empty result)
+        [ -z "$CHECKPATCH_ERRORS" ] && CHECKPATCH_ERRORS=0
+        [ -z "$CHECKPATCH_WARNINGS" ] && CHECKPATCH_WARNINGS=0
     else
         CHECKPATCH_ERRORS=0
         CHECKPATCH_WARNINGS=0
