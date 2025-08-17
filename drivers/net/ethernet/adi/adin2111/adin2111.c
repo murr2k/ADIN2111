@@ -195,7 +195,7 @@ int adin2111_hw_init(struct adin2111_priv *priv)
 
 	/* Configure CONFIG0 register */
 	config0 = ADIN2111_CONFIG0_SYNC;
-	
+
 	if (priv->pdata.tx_fcs_validation)
 		config0 |= ADIN2111_CONFIG0_TXFCSVE;
 
@@ -268,7 +268,7 @@ static int adin2111_parse_dt(struct adin2111_priv *priv)
 
 	/* Parse MAC addresses */
 	of_get_mac_address(np, priv->pdata.mac_addr_p1);
-	
+
 	/* For port 2, try to get from a separate property or derive from port 1 */
 	if (of_get_mac_address(np, priv->pdata.mac_addr_p2) != 0) {
 		if (!is_zero_ether_addr(priv->pdata.mac_addr_p1)) {
@@ -350,10 +350,10 @@ int adin2111_probe(struct spi_device *spi)
 				}
 
 				struct adin2111_port *port = netdev_priv(netdev);
+
 				port->priv = priv;
 				port->port_num = i;
 				port->netdev = netdev;
-				
 				ret = register_netdev(netdev);
 				if (ret) {
 					dev_err(&spi->dev, "Failed to register netdev for port %d: %d\n",

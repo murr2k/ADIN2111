@@ -1,0 +1,124 @@
+Custom analysis for adin2111.c
+===============================
+
+Checking for missing error handling...
+31:	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, irq_work);
+254:	priv->pdata.switch_mode = of_property_read_bool(np, "adi,switch-mode");
+255:	priv->pdata.cut_through = of_property_read_bool(np, "adi,cut-through");
+256:	priv->pdata.tx_fcs_validation = of_property_read_bool(np, "adi,tx-fcs-validation");
+257:	priv->pdata.crc_append = of_property_read_bool(np, "adi,crc-append");
+260:	priv->pdata.port1_enabled = !of_property_read_bool(np, "adi,port1-disabled");
+261:	priv->pdata.port2_enabled = !of_property_read_bool(np, "adi,port2-disabled");
+295:	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
+314:	priv->reset_gpio = devm_gpiod_get_optional(&spi->dev, "reset", GPIOD_OUT_LOW);
+319:	priv->regmap = adin2111_init_regmap(spi);
+346:				netdev = adin2111_create_netdev(priv, i);
+352:				struct adin2111_port *port = netdev_priv(netdev);
+371:		netdev = adin2111_create_netdev(priv, 0);
+424:	struct adin2111_priv *priv = spi_get_drvdata(spi);
+
+Checking for potential memory leaks...
+295:	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
+361:					free_netdev(netdev);
+382:			free_netdev(netdev);
+410:				free_netdev(priv->ports[i].netdev);
+415:		free_netdev(priv->netdev);
+437:				free_netdev(priv->ports[i].netdev);
+442:		free_netdev(priv->netdev);
+
+Checking for hardcoded values...
+3: * ADIN2111 Dual Port Industrial Ethernet Switch/PHY Driver
+5: * Copyright 2024 Analog Devices Inc.
+22:#include "adin2111.h"
+23:#include "adin2111_regs.h"
+26:extern struct regmap *adin2111_init_regmap(struct spi_device *spi);
+27:extern struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
+29:static void adin2111_work_handler(struct work_struct *work)
+31:	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, irq_work);
+38:	ret = adin2111_read_reg(priv, ADIN2111_STATUS0, &status0);
+42:	ret = adin2111_read_reg(priv, ADIN2111_STATUS1, &status1);
+47:	if (status0 & ADIN2111_STATUS0_PHYINT) {
+53:	if (priv->mode == ADIN2111_MODE_SWITCH) {
+54:		if (status1 & ADIN2111_STATUS1_P1_RX_RDY) {
+58:		if (status1 & ADIN2111_STATUS1_P2_RX_RDY) {
+65:	if (status1 & ADIN2111_STATUS1_SPI_ERR) {
+69:	if (status0 & ADIN2111_STATUS0_TXPE) {
+73:	if (status0 & ADIN2111_STATUS0_RXEVM) {
+78:	adin2111_write_reg(priv, ADIN2111_STATUS0, status0);
+79:	adin2111_write_reg(priv, ADIN2111_STATUS1, status1);
+85:irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+87:	struct adin2111_priv *priv = dev_id;
+93:int adin2111_hw_reset(struct adin2111_priv *priv)
+99:		msleep(100);
+105:int adin2111_soft_reset(struct adin2111_priv *priv)
+111:	ret = adin2111_write_reg(priv, ADIN2111_RESET, ADIN2111_RESET_SWRESET);
+116:	timeout = jiffies + msecs_to_jiffies(ADIN2111_RESET_TIMEOUT_MS);
+118:		ret = adin2111_read_reg(priv, ADIN2111_RESET, &val);
+122:		if (!(val & ADIN2111_RESET_SWRESET))
+125:		usleep_range(100, 200);
+131:static int adin2111_configure_switch_mode(struct adin2111_priv *priv)
+137:	ret = adin2111_read_reg(priv, ADIN2111_CONFIG2, &config2);
+143:		config2 |= ADIN2111_CONFIG2_PORT_CUT_THRU_EN;
+145:		config2 &= ~ADIN2111_CONFIG2_PORT_CUT_THRU_EN;
+149:		config2 |= ADIN2111_CONFIG2_CRC_APPEND;
+151:		config2 &= ~ADIN2111_CONFIG2_CRC_APPEND;
+153:	ret = adin2111_write_reg(priv, ADIN2111_CONFIG2, config2);
+162:		port_func |= ADIN2111_PORT_FUNCT_BC_DIS_P1 |
+163:			     ADIN2111_PORT_FUNCT_MC_DIS_P1;
+167:		port_func |= ADIN2111_PORT_FUNCT_BC_DIS_P2 |
+168:			     ADIN2111_PORT_FUNCT_MC_DIS_P2;
+171:	ret = adin2111_write_reg(priv, ADIN2111_PORT_FUNCT, port_func);
+181:int adin2111_hw_init(struct adin2111_priv *priv)
+187:	adin2111_hw_reset(priv);
+190:	ret = adin2111_soft_reset(priv);
+197:	config0 = ADIN2111_CONFIG0_SYNC;
+200:		config0 |= ADIN2111_CONFIG0_TXFCSVE;
+202:	config0 |= ADIN2111_CONFIG0_TXCTE | ADIN2111_CONFIG0_RXCTE;
+204:	ret = adin2111_write_reg(priv, ADIN2111_CONFIG0, config0);
+210:		ret = adin2111_configure_switch_mode(priv);
+216:	priv->irq_mask = ADIN2111_STATUS1_RX_RDY;
+218:		priv->irq_mask |= ADIN2111_STATUS1_P1_RX_RDY |
+219:				  ADIN2111_STATUS1_P2_RX_RDY;
+222:	ret = adin2111_write_reg(priv, ADIN2111_IMASK1, ~priv->irq_mask);
+227:	ret = adin2111_write_reg(priv, ADIN2111_CLEAR0, 0xFFFF);
+231:	ret = adin2111_write_reg(priv, ADIN2111_CLEAR1, 0xFFFFFFFF);
+236:	ret = adin2111_write_reg(priv, ADIN2111_FIFO_CLR,
+237:				 ADIN2111_FIFO_CLR_TX | ADIN2111_FIFO_CLR_RX);
+245:static int adin2111_parse_dt(struct adin2111_priv *priv)
+288:int adin2111_probe(struct spi_device *spi)
+290:	struct adin2111_priv *priv;
+306:	INIT_WORK(&priv->irq_work, adin2111_work_handler);
+309:	ret = adin2111_parse_dt(priv);
+319:	priv->regmap = adin2111_init_regmap(spi);
+327:	ret = adin2111_hw_init(priv);
+334:	ret = adin2111_phy_init(priv, 0);
+343:		for (i = 0; i < ADIN2111_PORTS; i++) {
+346:				netdev = adin2111_create_netdev(priv, i);
+352:				struct adin2111_port *port = netdev_priv(netdev);
+371:		netdev = adin2111_create_netdev(priv, 0);
+392:						adin2111_irq_handler,
+402:	dev_info(&spi->dev, "ADIN2111 driver probe completed successfully\n");
+407:		for (i = 0; i < ADIN2111_PORTS; i++) {
+418:	adin2111_phy_uninit(priv, 0);
+422:void adin2111_remove(struct spi_device *spi)
+424:	struct adin2111_priv *priv = spi_get_drvdata(spi);
+427:	dev_info(&spi->dev, "Removing ADIN2111 driver\n");
+434:		for (i = 0; i < ADIN2111_PORTS; i++) {
+446:	adin2111_phy_uninit(priv, 0);
+449:	adin2111_soft_reset(priv);
+453:	{ .compatible = "adi,adin2111" },
+456:MODULE_DEVICE_TABLE(of, adin2111_of_match);
+459:	{ "adin2111", 0 },
+462:MODULE_DEVICE_TABLE(spi, adin2111_spi_id);
+464:static struct spi_driver adin2111_driver = {
+466:		.name = ADIN2111_DRV_NAME,
+467:		.of_match_table = adin2111_of_match,
+469:	.probe = adin2111_probe,
+470:	.remove = adin2111_remove,
+471:	.id_table = adin2111_spi_id,
+474:module_spi_driver(adin2111_driver);
+476:MODULE_DESCRIPTION("ADIN2111 Dual Port Industrial Ethernet Switch/PHY Driver");
+479:MODULE_VERSION(ADIN2111_DRV_VERSION);
+
+Checking for missing __iomem annotations...
+85:irqreturn_t adin2111_irq_handler(int irq, void *dev_id)

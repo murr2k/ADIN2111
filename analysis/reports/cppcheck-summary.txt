@@ -1,0 +1,57 @@
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:425:6: style: The scope of the variable 'i' can be reduced. [variableScope]
+ int i;
+     ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:85:49: style: inconclusive: Function 'adin2111_irq_handler' argument 2 names different: declaration 'data' definition 'dev_id'. [funcArgNamesDifferent]
+irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.h:150:49: note: Function 'adin2111_irq_handler' argument 2 names different: declaration 'data' definition 'dev_id'.
+irqreturn_t adin2111_irq_handler(int irq, void *data);
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:85:49: note: Function 'adin2111_irq_handler' argument 2 names different: declaration 'data' definition 'dev_id'.
+irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:21:6: style: The scope of the variable 'ret' can be reduced. [variableScope]
+ int ret;
+     ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:161:11: style: The scope of the variable 'i' can be reduced. [variableScope]
+ int ret, i;
+          ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:202:6: style: The scope of the variable 'i' can be reduced. [variableScope]
+ int i;
+     ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:37:49: style: inconclusive: Function 'adin2111_mdio_read' argument 2 names different: declaration 'phy_id' definition 'addr'. [funcArgNamesDifferent]
+int adin2111_mdio_read(struct mii_bus *bus, int addr, int regnum)
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.h:130:49: note: Function 'adin2111_mdio_read' argument 2 names different: declaration 'phy_id' definition 'addr'.
+int adin2111_mdio_read(struct mii_bus *bus, int phy_id, int reg);
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:37:49: note: Function 'adin2111_mdio_read' argument 2 names different: declaration 'phy_id' definition 'addr'.
+int adin2111_mdio_read(struct mii_bus *bus, int addr, int regnum)
+                                                ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:37:59: style: inconclusive: Function 'adin2111_mdio_read' argument 3 names different: declaration 'reg' definition 'regnum'. [funcArgNamesDifferent]
+int adin2111_mdio_read(struct mii_bus *bus, int addr, int regnum)
+                                                          ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.h:130:61: note: Function 'adin2111_mdio_read' argument 3 names different: declaration 'reg' definition 'regnum'.
+int adin2111_mdio_read(struct mii_bus *bus, int phy_id, int reg);
+                                                            ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:37:59: note: Function 'adin2111_mdio_read' argument 3 names different: declaration 'reg' definition 'regnum'.
+int adin2111_mdio_read(struct mii_bus *bus, int addr, int regnum)
+                                                          ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:78:50: style: inconclusive: Function 'adin2111_mdio_write' argument 2 names different: declaration 'phy_id' definition 'addr'. [funcArgNamesDifferent]
+int adin2111_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
+                                                 ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.h:131:50: note: Function 'adin2111_mdio_write' argument 2 names different: declaration 'phy_id' definition 'addr'.
+int adin2111_mdio_write(struct mii_bus *bus, int phy_id, int reg, u16 val);
+                                                 ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:78:50: note: Function 'adin2111_mdio_write' argument 2 names different: declaration 'phy_id' definition 'addr'.
+int adin2111_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
+                                                 ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:78:60: style: inconclusive: Function 'adin2111_mdio_write' argument 3 names different: declaration 'reg' definition 'regnum'. [funcArgNamesDifferent]
+int adin2111_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
+                                                           ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.h:131:62: note: Function 'adin2111_mdio_write' argument 3 names different: declaration 'reg' definition 'regnum'.
+int adin2111_mdio_write(struct mii_bus *bus, int phy_id, int reg, u16 val);
+                                                             ^
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:78:60: note: Function 'adin2111_mdio_write' argument 3 names different: declaration 'reg' definition 'regnum'.
+int adin2111_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
+                                                           ^

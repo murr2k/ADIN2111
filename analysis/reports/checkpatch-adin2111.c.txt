@@ -1,0 +1,13 @@
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:27: WARNING: externs should be avoided in .c files
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:65: WARNING: braces {} are not necessary for single statement blocks
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:69: WARNING: braces {} are not necessary for single statement blocks
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:73: WARNING: braces {} are not necessary for single statement blocks
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:97: WARNING: msleep < 20ms can sleep for up to 20ms; see function description of msleep().
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:198: ERROR: trailing whitespace
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:271: ERROR: trailing whitespace
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:353: WARNING: Missing a blank line after declarations
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:356: ERROR: trailing whitespace
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:479: WARNING: adding a line without newline at end of file
+total: 3 errors, 7 warnings, 479 lines checked

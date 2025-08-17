@@ -1,0 +1,49 @@
+Custom analysis for adin2111_spi.c
+===============================
+
+Checking for missing error handling...
+27:	tx_buf[0] = (ADIN2111_SPI_READ | ADIN2111_SPI_ADDR(reg)) >> 8;
+28:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+44:	*val = (rx_buf[2] << 8) | rx_buf[3];
+55:	tx_buf[0] = (ADIN2111_SPI_WRITE | ADIN2111_SPI_ADDR(reg)) >> 8;
+56:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+57:	tx_buf[2] = (val >> 8) & 0xFF;
+106:	tx_buf[0] = (ADIN2111_SPI_READ | ADIN2111_SPI_ADDR(reg)) >> 8;
+107:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+133:	tx_buf = kmalloc(len + 2, GFP_KERNEL);
+138:	tx_buf[0] = (ADIN2111_SPI_WRITE | ADIN2111_SPI_ADDR(reg)) >> 8;
+139:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+
+Checking for potential memory leaks...
+133:	tx_buf = kmalloc(len + 2, GFP_KERNEL);
+148:	kfree(tx_buf);
+
+Checking for hardcoded values...
+3: * ADIN2111 Dual Port Industrial Ethernet Switch/PHY
+6: * Copyright 2024 Analog Devices Inc.
+13:#include "adin2111.h"
+14:#include "adin2111_regs.h"
+16:/* Removed unused adin2111_spi_read and adin2111_spi_write functions */
+18:static int adin2111_spi_reg_read(void *context, unsigned int reg,
+27:	tx_buf[0] = (ADIN2111_SPI_READ | ADIN2111_SPI_ADDR(reg)) >> 8;
+28:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+48:static int adin2111_spi_reg_write(void *context, unsigned int reg,
+55:	tx_buf[0] = (ADIN2111_SPI_WRITE | ADIN2111_SPI_ADDR(reg)) >> 8;
+56:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+69:	.reg_read = adin2111_spi_reg_read,
+70:	.reg_write = adin2111_spi_reg_write,
+73:struct regmap *adin2111_init_regmap(struct spi_device *spi)
+75:	return devm_regmap_init(&spi->dev, NULL, spi, &adin2111_regmap_config);
+78:int adin2111_read_reg(struct adin2111_priv *priv, u32 reg, u32 *val)
+88:int adin2111_write_reg(struct adin2111_priv *priv, u32 reg, u32 val)
+93:int adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val)
+99:int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len)
+106:	tx_buf[0] = (ADIN2111_SPI_READ | ADIN2111_SPI_ADDR(reg)) >> 8;
+107:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+138:	tx_buf[0] = (ADIN2111_SPI_WRITE | ADIN2111_SPI_ADDR(reg)) >> 8;
+139:	tx_buf[1] = ADIN2111_SPI_ADDR(reg) & 0xFF;
+152:MODULE_DESCRIPTION("ADIN2111 SPI Register Access");
+
+Checking for missing __iomem annotations...
+18:static int adin2111_spi_reg_read(void *context, unsigned int reg,
+48:static int adin2111_spi_reg_write(void *context, unsigned int reg,

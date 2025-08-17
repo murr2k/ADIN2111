@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<results version="2">
+    <cppcheck version="2.7"/>
+    <errors>
+        <error id="variableScope" severity="style" msg="The scope of the variable &apos;i&apos; can be reduced." verbose="The scope of the variable &apos;i&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="drivers/net/ethernet/adi/adin2111/adin2111.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.c" line="425" column="6"/>
+            <symbol>i</symbol>
+        </error>
+        <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_irq_handler&apos; argument 2 names different: declaration &apos;data&apos; definition &apos;dev_id&apos;." verbose="Function &apos;adin2111_irq_handler&apos; argument 2 names different: declaration &apos;data&apos; definition &apos;dev_id&apos;." cwe="628" inconclusive="true" file0="drivers/net/ethernet/adi/adin2111/adin2111.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.c" line="85" column="49"/>
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.h" line="150" column="49"/>
+            <symbol>adin2111_irq_handler</symbol>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &apos;ret&apos; can be reduced." verbose="The scope of the variable &apos;ret&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="21" column="6"/>
+            <symbol>ret</symbol>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &apos;i&apos; can be reduced." verbose="The scope of the variable &apos;i&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="161" column="11"/>
+            <symbol>i</symbol>
+        </error>
+        <error id="variableScope" severity="style" msg="The scope of the variable &apos;i&apos; can be reduced." verbose="The scope of the variable &apos;i&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="202" column="6"/>
+            <symbol>i</symbol>
+        </error>
+        <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_mdio_read&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." verbose="Function &apos;adin2111_mdio_read&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." cwe="628" inconclusive="true" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="37" column="49"/>
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.h" line="130" column="49"/>
+            <symbol>adin2111_mdio_read</symbol>
+        </error>
+        <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_mdio_read&apos; argument 3 names different: declaration &apos;reg&apos; definition &apos;regnum&apos;." verbose="Function &apos;adin2111_mdio_read&apos; argument 3 names different: declaration &apos;reg&apos; definition &apos;regnum&apos;." cwe="628" inconclusive="true" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="37" column="59"/>
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.h" line="130" column="61"/>
+            <symbol>adin2111_mdio_read</symbol>
+        </error>
+        <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_mdio_write&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." verbose="Function &apos;adin2111_mdio_write&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." cwe="628" inconclusive="true" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="78" column="50"/>
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.h" line="131" column="50"/>
+            <symbol>adin2111_mdio_write</symbol>
+        </error>
+        <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_mdio_write&apos; argument 3 names different: declaration &apos;reg&apos; definition &apos;regnum&apos;." verbose="Function &apos;adin2111_mdio_write&apos; argument 3 names different: declaration &apos;reg&apos; definition &apos;regnum&apos;." cwe="628" inconclusive="true" file0="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="78" column="60"/>
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111.h" line="131" column="62"/>
+            <symbol>adin2111_mdio_write</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;adin2111_modify_reg&apos; is never used." verbose="The function &apos;adin2111_modify_reg&apos; is never used." cwe="561">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_spi.c" line="93" column="0"/>
+            <symbol>adin2111_modify_reg</symbol>
+        </error>
+        <error id="unusedFunction" severity="style" msg="The function &apos;adin2111_rx_handler&apos; is never used." verbose="The function &apos;adin2111_rx_handler&apos; is never used." cwe="561">
+            <location file="drivers/net/ethernet/adi/adin2111/adin2111_netdev.c" line="243" column="0"/>
+            <symbol>adin2111_rx_handler</symbol>
+        </error>
+        <error id="missingIncludeSystem" severity="information" msg="Cppcheck cannot find all the include files (use --check-config for details)" verbose="Cppcheck cannot find all the include files. Cppcheck can check the code without the include files found. But the results will probably be more accurate if all the include files are found. Please check your project&apos;s include directories and add all of them as include directories for Cppcheck. To see what files Cppcheck cannot find use --check-config."/>
+    </errors>
+</results>

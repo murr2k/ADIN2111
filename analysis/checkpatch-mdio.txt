@@ -1,0 +1,4 @@
+No typos will be found - file '/home/murr2k/projects/ADIN2111/analysis/spelling.txt': No such file or directory
+No structs that should be const will be found - file '/home/murr2k/projects/ADIN2111/analysis/const_structs.checkpatch': No such file or directory
+drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:218: WARNING: adding a line without newline at end of file
+total: 0 errors, 1 warnings, 0 checks, 218 lines checked
