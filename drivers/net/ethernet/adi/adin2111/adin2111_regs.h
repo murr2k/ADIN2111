@@ -67,9 +67,13 @@
 #define ADIN2111_STATUS1_P2_PHYINT	BIT(7)
 #define ADIN2111_STATUS1_P1_PHYINT	BIT(6)
 #define ADIN2111_STATUS1_TX_RDY		BIT(3)
+#define ADIN2111_STATUS1_RX_RDY		BIT(4)
 
 #define ADIN2111_IMASK0		0x0C
 #define ADIN2111_IMASK1		0x0D
+
+#define ADIN2111_CLEAR0		0x0E
+#define ADIN2111_CLEAR1		0x0F
 
 /* Buffer Management */
 #define ADIN2111_BUFSTS			0x0B
@@ -108,6 +112,7 @@
 #define ADIN2111_MDIO_OP_READ		0x02
 #define ADIN2111_MDIO_OP_WRITE		0x01
 #define ADIN2111_MDIO_TIMEOUT_MS	100
+#define ADIN2111_RESET_TIMEOUT_MS	1000
 
 /* Frame Size Definitions */
 #define ADIN2111_MAX_FRAME_SIZE		1518
@@ -117,6 +122,19 @@
 
 /* TX Space Register */
 #define ADIN2111_TX_SPACE		0x32
+
+/* Port Control and Function Registers */
+#define ADIN2111_PORT_CTRL		0x33
+#define ADIN2111_PORT_FUNCT		0x34
+#define ADIN2111_PORT_FUNCT_BC_DIS_P1	BIT(0)
+#define ADIN2111_PORT_FUNCT_MC_DIS_P1	BIT(1)
+#define ADIN2111_PORT_FUNCT_BC_DIS_P2	BIT(2)
+#define ADIN2111_PORT_FUNCT_MC_DIS_P2	BIT(3)
+
+/* FIFO Clear Register */
+#define ADIN2111_FIFO_CLR		0x36
+#define ADIN2111_FIFO_CLR_TX		BIT(0)
+#define ADIN2111_FIFO_CLR_RX		BIT(1)
 
 /* Frame Header Format */
 #define ADIN2111_TX_HDR_DNC		BIT(31)

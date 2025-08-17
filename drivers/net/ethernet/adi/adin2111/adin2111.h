@@ -45,6 +45,18 @@ struct adin2111_port {
 	u8 mac_addr[ETH_ALEN];
 };
 
+/* Platform data */
+struct adin2111_pdata {
+	bool switch_mode;
+	bool cut_through;
+	bool crc_append;
+	bool tx_fcs_validation;
+	bool port1_enabled;
+	bool port2_enabled;
+	u8 mac_addr_p1[ETH_ALEN];
+	u8 mac_addr_p2[ETH_ALEN];
+};
+
 /* Main driver private data */
 struct adin2111_priv {
 	struct spi_device *spi;
@@ -52,9 +64,13 @@ struct adin2111_priv {
 	struct mii_bus *mii_bus;
 	struct device *dev;
 	
+	/* Platform data */
+	struct adin2111_pdata pdata;
+	
 	/* Operation mode */
 	enum adin2111_mode mode;
 	bool cut_through_en;
+	bool switch_mode;
 	
 	/* Ports */
 	struct adin2111_port ports[ADIN2111_PORTS];

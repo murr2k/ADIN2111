@@ -12,10 +12,12 @@
 #include <linux/gpio/consumer.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/of_net.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
+#include <linux/etherdevice.h>
 
 #include "adin2111.h"
 #include "adin2111_regs.h"
@@ -80,7 +82,7 @@ out:
 	mutex_unlock(&priv->lock);
 }
 
-static irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
 {
 	struct adin2111_priv *priv = dev_id;
 
