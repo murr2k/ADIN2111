@@ -3,7 +3,8 @@
  * ADIN2111 Test Suite - Fixed Implementation
  * Demonstrates proper environment-aware testing with real validation
  *
- * Copyright 2025 Analog Devices Inc.
+ * Author: Murray Kopit <murr2k@gmail.com>
+ * Date: August 16, 2025
  */
 
 #include <linux/module.h>
@@ -407,5 +408,5 @@ static struct sk_buff *create_forwarding_test_packet(size_t size)
 }
 
 MODULE_DESCRIPTION("ADIN2111 Fixed Test Suite - Environment Aware");
-MODULE_AUTHOR("Analog Devices Inc.");
+MODULE_AUTHOR("Murray Kopit <murr2k@gmail.com>");
 MODULE_LICENSE("GPL v2");

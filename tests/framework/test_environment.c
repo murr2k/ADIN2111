@@ -3,7 +3,8 @@
  * ADIN2111 Test Environment Framework Implementation
  * Environment detection and mock infrastructure
  *
- * Copyright 2025 Analog Devices Inc.
+ * Author: Murray Kopit <murr2k@gmail.com>
+ * Date: August 16, 2025
  */
 
 #include <linux/module.h>

@@ -1,5 +1,8 @@
 # ADIN2111 Test Suite Audit Report
 
+**Author:** Murray Kopit <murr2k@gmail.com>  
+**Date:** August 16, 2025
+
 ## Executive Summary
 
 This audit identifies multiple critical issues in the ADIN2111 test suite including false positives, incomplete test implementations, excessive skipping behavior, and missing test validations that could lead to undetected regressions.

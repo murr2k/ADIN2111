@@ -3,7 +3,8 @@
  * ADIN2111 Test Environment Framework
  * Environment detection and mock infrastructure for comprehensive testing
  *
- * Copyright 2025 Analog Devices Inc.
+ * Author: Murray Kopit <murr2k@gmail.com>
+ * Date: August 16, 2025
  */
 
 #ifndef _ADIN2111_TEST_ENVIRONMENT_H_

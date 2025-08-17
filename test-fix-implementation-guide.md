@@ -1,5 +1,8 @@
 # ADIN2111 Test Fix Implementation Guide
 
+**Author:** Murray Kopit <murr2k@gmail.com>  
+**Date:** August 16, 2025
+
 ## Overview
 
 This guide provides a comprehensive implementation strategy to fix the identified test issues, transforming false positive tests into environment-aware tests with proper validation and intentional mocking.

@@ -4,7 +4,8 @@
 # CI-Optimized Error Injection Test
 # Demonstrates mock infrastructure error injection in CI environment
 #
-# Copyright 2025 Analog Devices Inc.
+# Author: Murray Kopit <murr2k@gmail.com>
+# Date: August 16, 2025
 
 set -uo pipefail
 

@@ -4,7 +4,8 @@
 # ADIN2111 Basic Tests - Fixed Implementation
 # Environment-aware testing with proper validation and intentional mocking
 #
-# Copyright 2025 Analog Devices Inc.
+# Author: Murray Kopit <murr2k@gmail.com>
+# Date: August 16, 2025
 
 set -euo pipefail
 

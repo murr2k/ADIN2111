@@ -4,7 +4,8 @@
 # Test Error Injection Demonstration Script
 # Shows how the mock infrastructure handles error injection
 #
-# Copyright 2025 Analog Devices Inc.
+# Author: Murray Kopit <murr2k@gmail.com>
+# Date: August 16, 2025
 
 set -euo pipefail
 

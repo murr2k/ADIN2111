@@ -1,5 +1,8 @@
 # ADIN2111 Test Environment Strategy
 
+**Author:** Murray Kopit <murr2k@gmail.com>  
+**Date:** August 16, 2025
+
 ## Overview
 
 This document outlines the strategy for implementing environment-aware testing with proper mocking to resolve false positives and improve test reliability.
