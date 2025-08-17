@@ -137,7 +137,6 @@ int adin2111_netdev_open(struct net_device *ndev);
 int adin2111_netdev_stop(struct net_device *ndev);
 netdev_tx_t adin2111_netdev_xmit(struct sk_buff *skb, struct net_device *ndev);
 void adin2111_netdev_get_stats64(struct net_device *ndev, struct rtnl_link_stats64 *stats);
-int adin2111_netdev_set_mac_address(struct net_device *ndev, void *addr);
 int adin2111_netdev_change_mtu(struct net_device *ndev, int new_mtu);
 
 /* Switch operations */
