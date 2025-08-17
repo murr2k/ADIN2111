@@ -30,8 +30,6 @@ jobs:
     strategy:
       matrix:
         kernel: [
-          '5.10',
-          '5.15',
           '6.1',
           '6.5',
           '6.6',
@@ -39,12 +37,6 @@ jobs:
           'latest'
         ]
         gcc: ['9', '11', '12']
-        exclude:
-          # GCC 12 not compatible with older kernels
-          - kernel: '5.10'
-            gcc: '12'
-          - kernel: '5.15'
-            gcc: '12'
     
     steps:
     - name: Checkout Repository

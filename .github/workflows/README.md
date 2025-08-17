@@ -15,9 +15,9 @@ This directory contains CI/CD pipelines for the ADIN2111 Linux driver project.
 - Manual dispatch
 
 **Matrix Testing**:
-- Kernel versions: 5.10, 5.15, 6.1, 6.5, 6.6*, 6.8, latest
+- Kernel versions: 6.1, 6.5, 6.6*, 6.8, latest
 - GCC versions: 9, 11, 12
-- Total combinations: 19 (with exclusions)
+- Total combinations: 15 (5 kernels × 3 GCC versions)
 *Note: 6.6 falls back to 6.5 if not available in Ubuntu repos
 
 **Checks**:
