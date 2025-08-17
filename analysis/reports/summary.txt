@@ -1,0 +1,32 @@
+ADIN2111 Static Code Analysis Summary
+====================================
+Date: Sat Aug 16 20:49:33 PDT 2025
+Driver Path: /home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111
+
+CppCheck Results:
+  Errors: 0
+  Warnings: 0
+  Style Issues: 9
+
+Checkpatch Results:
+  Errors: 0
+  Warnings: 14
+
+Custom Analysis:
+  Potential Issues: 309
+
+Total Issues Found: 323
+
+Recommendations:
+1. Fix all checkpatch errors (coding style violations)
+2. Address cppcheck warnings and errors
+3. Review custom analysis findings for potential improvements
+4. Consider adding static analysis to CI pipeline
+
+Files Analyzed:
+  adin2111.c
+  adin2111_mdio.c
+  adin2111_netdev.c
+  adin2111_spi.c
+  adin2111.h
+  adin2111_regs.h
