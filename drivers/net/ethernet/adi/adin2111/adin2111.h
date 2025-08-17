@@ -22,6 +22,9 @@
 #define ADIN2111_PORT_1		0
 #define ADIN2111_PORT_2		1
 
+#define ADIN2111_DRV_NAME	"adin2111"
+#define ADIN2111_DRV_VERSION	"1.0.0"
+
 /* Driver operation modes */
 enum adin2111_mode {
 	ADIN2111_MODE_SWITCH,	/* Hardware switch mode */
@@ -75,6 +78,9 @@ struct adin2111_priv {
 	/* Ports */
 	struct adin2111_port ports[ADIN2111_PORTS];
 	int num_ports;
+	
+	/* Single netdev for switch mode */
+	struct net_device *netdev;
 	
 	/* Work and interrupts */
 	struct work_struct irq_work;
