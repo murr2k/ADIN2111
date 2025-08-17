@@ -11,6 +11,7 @@
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <linux/module.h>
+#include <linux/bitfield.h>
 
 #include "adin2111.h"
 #include "adin2111_regs.h"
@@ -32,13 +33,13 @@ static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *n
 		return NETDEV_TX_OK;
 	}
 
-	mutex_lock(&priv->tx_lock);
+	spin_lock(&priv->tx_lock);
 
 	/* Check if TX FIFO has space */
 	u32 tx_space;
 	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
 	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
-		mutex_unlock(&priv->tx_lock);
+		spin_unlock(&priv->tx_lock);
 		netif_stop_queue(netdev);
 		return NETDEV_TX_BUSY;
 	}
@@ -54,7 +55,7 @@ static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *n
 		dev_consume_skb_any(skb);
 	}
 
-	mutex_unlock(&priv->tx_lock);
+	spin_unlock(&priv->tx_lock);
 	return NETDEV_TX_OK;
 }
 

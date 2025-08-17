@@ -26,7 +26,7 @@ extern struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int
 
 static void adin2111_work_handler(struct work_struct *work)
 {
-	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, work);
+	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, irq_work);
 	u32 status0, status1;
 	int ret;
 
@@ -47,25 +47,20 @@ static void adin2111_work_handler(struct work_struct *work)
 		/* PHY interrupt handling is done by the PHY subsystem */
 	}
 
-	/* Handle RX ready */
-	if (status1 & ADIN2111_STATUS1_RX_RDY) {
-		adin2111_rx_handler(priv);
-	}
-
-	/* Handle port-specific RX in switch mode */
-	if (priv->switch_mode) {
+	/* Handle port-specific RX */
+	if (priv->mode == ADIN2111_MODE_SWITCH) {
 		if (status1 & ADIN2111_STATUS1_P1_RX_RDY) {
 			dev_dbg(&priv->spi->dev, "Port 1 RX ready\n");
-			adin2111_rx_handler(priv);
+			/* RX handling would be implemented here */
 		}
 		if (status1 & ADIN2111_STATUS1_P2_RX_RDY) {
 			dev_dbg(&priv->spi->dev, "Port 2 RX ready\n");
-			adin2111_rx_handler(priv);
+			/* RX handling would be implemented here */
 		}
 	}
 
 	/* Handle errors */
-	if (status0 & ADIN2111_STATUS0_SPI_ERR) {
+	if (status1 & ADIN2111_STATUS1_SPI_ERR) {
 		dev_err(&priv->spi->dev, "SPI error detected\n");
 	}
 
@@ -73,13 +68,13 @@ static void adin2111_work_handler(struct work_struct *work)
 		dev_err(&priv->spi->dev, "TX protocol error\n");
 	}
 
-	if (status0 & ADIN2111_STATUS0_RXPE) {
-		dev_err(&priv->spi->dev, "RX protocol error\n");
+	if (status0 & ADIN2111_STATUS0_RXEVM) {
+		dev_err(&priv->spi->dev, "RX error\n");
 	}
 
-	/* Clear processed interrupts */
-	adin2111_write_reg(priv, ADIN2111_CLEAR0, status0);
-	adin2111_write_reg(priv, ADIN2111_CLEAR1, status1);
+	/* Clear processed interrupts by writing to status registers */
+	adin2111_write_reg(priv, ADIN2111_STATUS0, status0);
+	adin2111_write_reg(priv, ADIN2111_STATUS1, status1);
 
 out:
 	mutex_unlock(&priv->lock);
@@ -89,7 +84,7 @@ static irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
 {
 	struct adin2111_priv *priv = dev_id;
 
-	schedule_work(&priv->work);
+	schedule_work(&priv->irq_work);
 	return IRQ_HANDLED;
 }
 
