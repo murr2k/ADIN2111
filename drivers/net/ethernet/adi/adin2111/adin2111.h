@@ -168,9 +168,14 @@ int adin2111_hw_init(struct adin2111_priv *priv);
 int adin2111_hw_reset(struct adin2111_priv *priv);
 int adin2111_check_id(struct adin2111_priv *priv);
 
+/* Network device functions */
+int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port);
+void adin2111_rx_handler(struct adin2111_priv *priv);
+struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
+
 /* Utilities */
 void adin2111_get_mac_address(struct adin2111_priv *priv, int port, u8 *addr);
-int adin2111_set_mac_address(struct adin2111_priv *priv, int port, const u8 *addr);
+int adin2111_set_mac_address_hw(struct adin2111_priv *priv, int port, const u8 *addr);
 int adin2111_update_statistics(struct adin2111_priv *priv, int port);
 
 #ifdef CONFIG_ADIN2111_DEBUG

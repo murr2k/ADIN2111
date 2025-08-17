@@ -69,11 +69,7 @@ static int adin2111_open(struct net_device *netdev)
 
 	/* Start PHY */
 	if (port->phydev) {
-		ret = phy_start(port->phydev);
-		if (ret) {
-			dev_err(&priv->spi->dev, "Failed to start PHY: %d\n", ret);
-			return ret;
-		}
+		phy_start(port->phydev);
 	}
 
 	/* Enable port in switch configuration */
@@ -148,7 +144,7 @@ static void adin2111_get_stats64(struct net_device *netdev,
 	spin_unlock(&port->stats_lock);
 }
 
-static int adin2111_set_mac_address(struct net_device *netdev, void *addr)
+static int adin2111_netdev_set_mac_address(struct net_device *netdev, void *addr)
 {
 	struct adin2111_port *port = netdev_priv(netdev);
 	struct adin2111_priv *priv = port->priv;
@@ -203,7 +199,7 @@ static const struct net_device_ops adin2111_netdev_ops = {
 	.ndo_stop		= adin2111_stop,
 	.ndo_start_xmit		= adin2111_start_xmit,
 	.ndo_get_stats64	= adin2111_get_stats64,
-	.ndo_set_mac_address	= adin2111_set_mac_address,
+	.ndo_set_mac_address	= adin2111_netdev_set_mac_address,
 	.ndo_change_mtu		= adin2111_change_mtu,
 	.ndo_validate_addr	= eth_validate_addr,
 };
@@ -341,17 +337,17 @@ struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_n
 
 	/* Set device name */
 	if (priv->switch_mode) {
-		snprintf(netdev->name, IFNAMSIZ, "sw%dp%d", priv->spi->bus->num, port_num);
+		snprintf(netdev->name, IFNAMSIZ, "sw%dp%d", 0, port_num);
 	} else {
-		snprintf(netdev->name, IFNAMSIZ, "eth%d", priv->spi->bus->num);
+		snprintf(netdev->name, IFNAMSIZ, "eth%d", 0);
 	}
 
 	/* Set MAC address */
 	if (priv->switch_mode) {
 		if (port_num == 0 && !is_zero_ether_addr(priv->pdata.mac_addr_p1)) {
-			ether_addr_copy(netdev->dev_addr, priv->pdata.mac_addr_p1);
+			memcpy((u8 *)netdev->dev_addr, priv->pdata.mac_addr_p1, ETH_ALEN);
 		} else if (port_num == 1 && !is_zero_ether_addr(priv->pdata.mac_addr_p2)) {
-			ether_addr_copy(netdev->dev_addr, priv->pdata.mac_addr_p2);
+			memcpy((u8 *)netdev->dev_addr, priv->pdata.mac_addr_p2, ETH_ALEN);
 		} else {
 			eth_hw_addr_random(netdev);
 		}
