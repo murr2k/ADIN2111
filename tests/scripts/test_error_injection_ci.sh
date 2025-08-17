@@ -6,7 +6,7 @@
 #
 # Copyright 2025 Analog Devices Inc.
 
-set -euo pipefail
+set -uo pipefail
 
 echo "================================================"
 echo "ADIN2111 Mock Infrastructure Error Injection Test (CI)"
