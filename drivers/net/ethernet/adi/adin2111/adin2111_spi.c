@@ -13,30 +13,7 @@
 #include "adin2111.h"
 #include "adin2111_regs.h"
 
-static int adin2111_spi_read(void *context, const void *reg_buf, size_t reg_size,
-			     void *val_buf, size_t val_size)
-{
-	struct spi_device *spi = context;
-	struct spi_transfer xfers[] = {
-		{
-			.tx_buf = reg_buf,
-			.len = reg_size,
-		},
-		{
-			.rx_buf = val_buf,
-			.len = val_size,
-		},
-	};
-
-	return spi_sync_transfer(spi, xfers, ARRAY_SIZE(xfers));
-}
-
-static int adin2111_spi_write(void *context, const void *data, size_t count)
-{
-	struct spi_device *spi = context;
-
-	return spi_write(spi, data, count);
-}
+/* Removed unused adin2111_spi_read and adin2111_spi_write functions */
 
 static int adin2111_spi_reg_read(void *context, unsigned int reg,
 				 unsigned int *val)
@@ -119,7 +96,7 @@ int adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val)
 }
 
 /* Bulk read/write functions for frame data */
-int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, void *data, size_t len)
+int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len)
 {
 	struct spi_device *spi = priv->spi;
 	u8 tx_buf[2];
@@ -147,7 +124,7 @@ int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, void *data, size_t l
 	return ret;
 }
 
-int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const void *data, size_t len)
+int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len)
 {
 	struct spi_device *spi = priv->spi;
 	u8 *tx_buf;

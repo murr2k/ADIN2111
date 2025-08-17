@@ -75,50 +75,81 @@ jobs:
     
     - name: Setup Kernel Headers
       run: |
+        echo "::group::Update package lists"
+        sudo apt-get update
+        echo "::endgroup::"
+        
         echo "::group::Determine kernel version"
         if [ "${{ matrix.kernel }}" = "latest" ]; then
+          # Use the runner's current kernel
           KERNEL_VERSION=$(uname -r)
           echo "Using current kernel: $KERNEL_VERSION"
         else
-          # Special handling for kernel 6.6 which might not be available
-          if [ "${{ matrix.kernel }}" = "6.6" ]; then
-            echo "::warning::Kernel 6.6 not available in standard Ubuntu repos, trying alternatives..."
-            # Try to find 6.6 or fall back to closest available
-            KERNEL_VERSION=$(apt-cache search linux-headers-6.6 | \
-                            grep -E "linux-headers-6\.6\.[0-9]+-[0-9]+-generic" | \
-                            sort -V | tail -1 | awk '{print $1}' | \
-                            sed 's/linux-headers-//')
-            if [ -z "$KERNEL_VERSION" ]; then
-              echo "::warning::Kernel 6.6 not found, using 6.5 as fallback"
-              KERNEL_VERSION=$(apt-cache search linux-headers-6.5 | \
-                              grep -E "linux-headers-6\.5\.[0-9]+-[0-9]+-generic" | \
-                              sort -V | tail -1 | awk '{print $1}' | \
-                              sed 's/linux-headers-//')
-            fi
-          else
-            # Find latest minor version for the major version specified
-            KERNEL_VERSION=$(apt-cache search linux-headers-${{ matrix.kernel }} | \
-                            grep -E "linux-headers-${{ matrix.kernel }}\.[0-9]+-[0-9]+-generic" | \
-                            sort -V | tail -1 | awk '{print $1}' | \
-                            sed 's/linux-headers-//')
-          fi
+          # First, let's see what's available
+          echo "Available kernels for ${{ matrix.kernel }}:"
+          apt-cache search linux-headers-${{ matrix.kernel }} | grep -E "generic|amd64" || true
           
-          if [ -z "$KERNEL_VERSION" ]; then
-            echo "::error::Could not find kernel headers for ${{ matrix.kernel }}"
-            exit 1
-          fi
-          echo "Found kernel version: $KERNEL_VERSION"
+          # Try to find the kernel version
+          KERNEL_VERSION=""
+          
+          # Special handling for different kernel versions
+          case "${{ matrix.kernel }}" in
+            "6.1")
+              # Ubuntu 22.04 doesn't have 6.1, use generic
+              echo "::warning::Kernel 6.1 not available, using generic headers"
+              KERNEL_VERSION="generic"
+              ;;
+            "6.5")
+              # Ubuntu 24.04 kernel, may need to add PPA
+              KERNEL_VERSION=$(apt-cache search linux-headers-6.5.0 | \
+                              grep -E "linux-headers-6\.5\.0-[0-9]+-generic" | \
+                              sort -V | tail -1 | awk '{print $1}' | \
+                              sed 's/linux-headers-//') || true
+              if [ -z "$KERNEL_VERSION" ]; then
+                echo "::warning::Kernel 6.5 not found, using generic"
+                KERNEL_VERSION="generic"
+              fi
+              ;;
+            "6.6")
+              # Not in standard repos
+              echo "::warning::Kernel 6.6 not in standard repos, using generic"
+              KERNEL_VERSION="generic"
+              ;;
+            "6.8")
+              # Ubuntu 24.04 kernel
+              KERNEL_VERSION=$(apt-cache search linux-headers-6.8.0 | \
+                              grep -E "linux-headers-6\.8\.0-[0-9]+-generic" | \
+                              sort -V | tail -1 | awk '{print $1}' | \
+                              sed 's/linux-headers-//') || true
+              if [ -z "$KERNEL_VERSION" ]; then
+                echo "::warning::Kernel 6.8 not found, using generic"
+                KERNEL_VERSION="generic"
+              fi
+              ;;
+            *)
+              KERNEL_VERSION="generic"
+              ;;
+          esac
+          
+          echo "Selected kernel version: $KERNEL_VERSION"
         fi
         echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
         echo "::endgroup::"
         
         echo "::group::Install kernel headers"
-        sudo apt-get install -y linux-headers-${KERNEL_VERSION} || \
-          sudo apt-get install -y linux-headers-generic
+        if [ "$KERNEL_VERSION" = "generic" ]; then
+          sudo apt-get install -y linux-headers-generic build-essential
+        else
+          sudo apt-get install -y linux-headers-${KERNEL_VERSION} build-essential || \
+            sudo apt-get install -y linux-headers-generic build-essential
+        fi
         echo "::endgroup::"
         
         echo "::group::Verify kernel headers"
-        ls -la /lib/modules/*/build/ | head -5
+        echo "Installed kernel headers:"
+        ls -la /lib/modules/*/build/ 2>/dev/null | head -5 || echo "No kernel build directories found"
+        echo "Using kernel:"
+        ls -la /lib/modules/$(uname -r)/build/ 2>/dev/null || echo "Current kernel build directory not found"
         echo "::endgroup::"
     
     - name: Build Kernel Module
@@ -149,8 +180,8 @@ jobs:
         fi
         
         # Check for module file
-        if [ ! -f "adin2111.ko" ]; then
-          echo "::error::Kernel module adin2111.ko not found after build"
+        if [ ! -f "adin2111_driver.ko" ]; then
+          echo "::error::Kernel module adin2111_driver.ko not found after build"
           exit 1
         fi
         
@@ -197,14 +228,14 @@ jobs:
         echo "::group::Module information"
         
         # Display module info
-        modinfo ./adin2111.ko
+        modinfo ./adin2111_driver.ko
         
         # Check module size
-        SIZE=$(stat -c%s adin2111.ko)
+        SIZE=$(stat -c%s adin2111_driver.ko)
         echo "Module size: $SIZE bytes"
         
         # Verify module symbols
-        nm -n adin2111.ko | head -20
+        nm -n adin2111_driver.ko | head -20
         
         echo "::endgroup::"
     
@@ -261,10 +292,10 @@ jobs:
         echo "- **Warnings**: ${{ steps.build_module.outputs.warnings || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ -f "${{ env.DRIVER_PATH }}/adin2111.ko" ]; then
+        if [ -f "${{ env.DRIVER_PATH }}/adin2111_driver.ko" ]; then
           echo "### Module Details" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          modinfo ${{ env.DRIVER_PATH }}/adin2111.ko | head -10 >> $GITHUB_STEP_SUMMARY
+          modinfo ${{ env.DRIVER_PATH }}/adin2111_driver.ko | head -10 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         fi
 

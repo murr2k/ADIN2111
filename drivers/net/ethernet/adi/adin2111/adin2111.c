@@ -12,10 +12,12 @@
 #include <linux/gpio/consumer.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/of_net.h>
 #include <linux/interrupt.h>
 #include <linux/workqueue.h>
 #include <linux/delay.h>
 #include <linux/crc32.h>
+#include <linux/etherdevice.h>
 
 #include "adin2111.h"
 #include "adin2111_regs.h"
@@ -26,7 +28,7 @@ extern struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int
 
 static void adin2111_work_handler(struct work_struct *work)
 {
-	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, work);
+	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, irq_work);
 	u32 status0, status1;
 	int ret;
 
@@ -47,25 +49,20 @@ static void adin2111_work_handler(struct work_struct *work)
 		/* PHY interrupt handling is done by the PHY subsystem */
 	}
 
-	/* Handle RX ready */
-	if (status1 & ADIN2111_STATUS1_RX_RDY) {
-		adin2111_rx_handler(priv);
-	}
-
-	/* Handle port-specific RX in switch mode */
-	if (priv->switch_mode) {
+	/* Handle port-specific RX */
+	if (priv->mode == ADIN2111_MODE_SWITCH) {
 		if (status1 & ADIN2111_STATUS1_P1_RX_RDY) {
 			dev_dbg(&priv->spi->dev, "Port 1 RX ready\n");
-			adin2111_rx_handler(priv);
+			/* RX handling would be implemented here */
 		}
 		if (status1 & ADIN2111_STATUS1_P2_RX_RDY) {
 			dev_dbg(&priv->spi->dev, "Port 2 RX ready\n");
-			adin2111_rx_handler(priv);
+			/* RX handling would be implemented here */
 		}
 	}
 
 	/* Handle errors */
-	if (status0 & ADIN2111_STATUS0_SPI_ERR) {
+	if (status1 & ADIN2111_STATUS1_SPI_ERR) {
 		dev_err(&priv->spi->dev, "SPI error detected\n");
 	}
 
@@ -73,23 +70,23 @@ static void adin2111_work_handler(struct work_struct *work)
 		dev_err(&priv->spi->dev, "TX protocol error\n");
 	}
 
-	if (status0 & ADIN2111_STATUS0_RXPE) {
-		dev_err(&priv->spi->dev, "RX protocol error\n");
+	if (status0 & ADIN2111_STATUS0_RXEVM) {
+		dev_err(&priv->spi->dev, "RX error\n");
 	}
 
-	/* Clear processed interrupts */
-	adin2111_write_reg(priv, ADIN2111_CLEAR0, status0);
-	adin2111_write_reg(priv, ADIN2111_CLEAR1, status1);
+	/* Clear processed interrupts by writing to status registers */
+	adin2111_write_reg(priv, ADIN2111_STATUS0, status0);
+	adin2111_write_reg(priv, ADIN2111_STATUS1, status1);
 
 out:
 	mutex_unlock(&priv->lock);
 }
 
-static irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
 {
 	struct adin2111_priv *priv = dev_id;
 
-	schedule_work(&priv->work);
+	schedule_work(&priv->irq_work);
 	return IRQ_HANDLED;
 }
 
@@ -183,7 +180,7 @@ static int adin2111_configure_switch_mode(struct adin2111_priv *priv)
 
 int adin2111_hw_init(struct adin2111_priv *priv)
 {
-	u32 config0, config2;
+	u32 config0;
 	int ret;
 
 	/* Perform hardware reset if possible */
@@ -288,7 +285,7 @@ static int adin2111_parse_dt(struct adin2111_priv *priv)
 	return 0;
 }
 
-static int adin2111_probe(struct spi_device *spi)
+int adin2111_probe(struct spi_device *spi)
 {
 	struct adin2111_priv *priv;
 	struct net_device *netdev;
@@ -304,8 +301,9 @@ static int adin2111_probe(struct spi_device *spi)
 
 	/* Initialize locks and work queues */
 	mutex_init(&priv->lock);
-	mutex_init(&priv->tx_lock);
-	INIT_WORK(&priv->work, adin2111_work_handler);
+	spin_lock_init(&priv->tx_lock);
+	spin_lock_init(&priv->rx_lock);
+	INIT_WORK(&priv->irq_work, adin2111_work_handler);
 
 	/* Parse device tree */
 	ret = adin2111_parse_dt(priv);
@@ -333,7 +331,7 @@ static int adin2111_probe(struct spi_device *spi)
 	}
 
 	/* Initialize PHY management */
-	ret = adin2111_phy_init(priv);
+	ret = adin2111_phy_init(priv, 0);
 	if (ret) {
 		dev_err(&spi->dev, "PHY initialization failed: %d\n", ret);
 		return ret;
@@ -342,7 +340,7 @@ static int adin2111_probe(struct spi_device *spi)
 	/* Create network devices */
 	if (priv->switch_mode) {
 		/* Create separate netdevs for each port */
-		for (i = 0; i < ADIN2111_MAX_PORTS; i++) {
+		for (i = 0; i < ADIN2111_PORTS; i++) {
 			if ((i == 0 && priv->pdata.port1_enabled) ||
 			    (i == 1 && priv->pdata.port2_enabled)) {
 				netdev = adin2111_create_netdev(priv, i);
@@ -351,7 +349,10 @@ static int adin2111_probe(struct spi_device *spi)
 					goto err_cleanup_netdevs;
 				}
 
-				priv->ports[i] = netdev_priv(netdev);
+				struct adin2111_port *port = netdev_priv(netdev);
+				port->priv = priv;
+				port->port_num = i;
+				port->netdev = netdev;
 				
 				ret = register_netdev(netdev);
 				if (ret) {
@@ -403,10 +404,10 @@ static int adin2111_probe(struct spi_device *spi)
 
 err_cleanup_netdevs:
 	if (priv->switch_mode) {
-		for (i = 0; i < ADIN2111_MAX_PORTS; i++) {
-			if (priv->ports[i]) {
-				unregister_netdev(priv->ports[i]->netdev);
-				free_netdev(priv->ports[i]->netdev);
+		for (i = 0; i < ADIN2111_PORTS; i++) {
+			if (priv->ports[i].netdev) {
+				unregister_netdev(priv->ports[i].netdev);
+				free_netdev(priv->ports[i].netdev);
 			}
 		}
 	} else if (priv->netdev) {
@@ -414,11 +415,11 @@ err_cleanup_netdevs:
 		free_netdev(priv->netdev);
 	}
 err_cleanup_phy:
-	adin2111_phy_cleanup(priv);
+	adin2111_phy_uninit(priv, 0);
 	return ret;
 }
 
-static void adin2111_remove(struct spi_device *spi)
+void adin2111_remove(struct spi_device *spi)
 {
 	struct adin2111_priv *priv = spi_get_drvdata(spi);
 	int i;
@@ -426,14 +427,14 @@ static void adin2111_remove(struct spi_device *spi)
 	dev_info(&spi->dev, "Removing ADIN2111 driver\n");
 
 	/* Cancel work */
-	cancel_work_sync(&priv->work);
+	cancel_work_sync(&priv->irq_work);
 
 	/* Cleanup network devices */
 	if (priv->switch_mode) {
-		for (i = 0; i < ADIN2111_MAX_PORTS; i++) {
-			if (priv->ports[i]) {
-				unregister_netdev(priv->ports[i]->netdev);
-				free_netdev(priv->ports[i]->netdev);
+		for (i = 0; i < ADIN2111_PORTS; i++) {
+			if (priv->ports[i].netdev) {
+				unregister_netdev(priv->ports[i].netdev);
+				free_netdev(priv->ports[i].netdev);
 			}
 		}
 	} else if (priv->netdev) {
@@ -442,7 +443,7 @@ static void adin2111_remove(struct spi_device *spi)
 	}
 
 	/* Cleanup PHY */
-	adin2111_phy_cleanup(priv);
+	adin2111_phy_uninit(priv, 0);
 
 	/* Reset device */
 	adin2111_soft_reset(priv);

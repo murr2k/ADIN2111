@@ -22,6 +22,9 @@
 #define ADIN2111_PORT_1		0
 #define ADIN2111_PORT_2		1
 
+#define ADIN2111_DRV_NAME	"adin2111"
+#define ADIN2111_DRV_VERSION	"1.0.0"
+
 /* Driver operation modes */
 enum adin2111_mode {
 	ADIN2111_MODE_SWITCH,	/* Hardware switch mode */
@@ -45,6 +48,18 @@ struct adin2111_port {
 	u8 mac_addr[ETH_ALEN];
 };
 
+/* Platform data */
+struct adin2111_pdata {
+	bool switch_mode;
+	bool cut_through;
+	bool crc_append;
+	bool tx_fcs_validation;
+	bool port1_enabled;
+	bool port2_enabled;
+	u8 mac_addr_p1[ETH_ALEN];
+	u8 mac_addr_p2[ETH_ALEN];
+};
+
 /* Main driver private data */
 struct adin2111_priv {
 	struct spi_device *spi;
@@ -52,13 +67,20 @@ struct adin2111_priv {
 	struct mii_bus *mii_bus;
 	struct device *dev;
 	
+	/* Platform data */
+	struct adin2111_pdata pdata;
+	
 	/* Operation mode */
 	enum adin2111_mode mode;
 	bool cut_through_en;
+	bool switch_mode;
 	
 	/* Ports */
 	struct adin2111_port ports[ADIN2111_PORTS];
 	int num_ports;
+	
+	/* Single netdev for switch mode */
+	struct net_device *netdev;
 	
 	/* Work and interrupts */
 	struct work_struct irq_work;
@@ -89,6 +111,7 @@ struct adin2111_priv {
 /* Main driver */
 int adin2111_probe(struct spi_device *spi);
 void adin2111_remove(struct spi_device *spi);
+int adin2111_soft_reset(struct adin2111_priv *priv);
 
 /* SPI interface */
 int adin2111_spi_init(struct adin2111_priv *priv);
@@ -98,6 +121,8 @@ int adin2111_set_bits(struct adin2111_priv *priv, u32 reg, u32 mask);
 int adin2111_clear_bits(struct adin2111_priv *priv, u32 reg, u32 mask);
 int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
 int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
+struct regmap *adin2111_init_regmap(struct spi_device *spi);
+int adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val);
 
 /* MDIO interface */
 int adin2111_mdio_init(struct adin2111_priv *priv);
@@ -112,7 +137,6 @@ int adin2111_netdev_open(struct net_device *ndev);
 int adin2111_netdev_stop(struct net_device *ndev);
 netdev_tx_t adin2111_netdev_xmit(struct sk_buff *skb, struct net_device *ndev);
 void adin2111_netdev_get_stats64(struct net_device *ndev, struct rtnl_link_stats64 *stats);
-int adin2111_netdev_set_mac_address(struct net_device *ndev, void *addr);
 int adin2111_netdev_change_mtu(struct net_device *ndev, int new_mtu);
 
 /* Switch operations */
@@ -143,9 +167,14 @@ int adin2111_hw_init(struct adin2111_priv *priv);
 int adin2111_hw_reset(struct adin2111_priv *priv);
 int adin2111_check_id(struct adin2111_priv *priv);
 
+/* Network device functions */
+int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port);
+void adin2111_rx_handler(struct adin2111_priv *priv);
+struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
+
 /* Utilities */
 void adin2111_get_mac_address(struct adin2111_priv *priv, int port, u8 *addr);
-int adin2111_set_mac_address(struct adin2111_priv *priv, int port, const u8 *addr);
+int adin2111_set_mac_address_hw(struct adin2111_priv *priv, int port, const u8 *addr);
 int adin2111_update_statistics(struct adin2111_priv *priv, int port);
 
 #ifdef CONFIG_ADIN2111_DEBUG
