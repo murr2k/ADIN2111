@@ -1,6 +1,6 @@
 # ADIN2111 Linux Driver - Switch Mode Implementation
 
-![Linux](https://img.shields.io/badge/Linux_Kernel-Driver-FCC624?style=flat-square&logo=linux&logoColor=black) ![License](https://img.shields.io/badge/License-GPL_2.0+-green?style=flat-square) ![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=flat-square) ![Hardware](https://img.shields.io/badge/Hardware-ADIN2111-purple?style=flat-square) ![Latency](https://img.shields.io/badge/Latency-<2μs-brightgreen?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)
+![Linux](https://img.shields.io/badge/Linux_Kernel-Driver-FCC624?style=flat-square&logo=linux&logoColor=black) ![License](https://img.shields.io/badge/License-GPL_2.0+-green?style=flat-square) ![Build Status](https://github.com/murr2k/ADIN2111/actions/workflows/build.yml/badge.svg) ![Hardware](https://img.shields.io/badge/Hardware-ADIN2111-purple?style=flat-square) ![Latency](https://img.shields.io/badge/Latency-<2μs-brightgreen?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)
 
 **Author:** Murray Kopit  
 **Date:** August 11, 2025
