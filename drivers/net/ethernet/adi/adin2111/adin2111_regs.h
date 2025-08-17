@@ -123,8 +123,7 @@
 /* TX Space Register */
 #define ADIN2111_TX_SPACE		0x32
 
-/* Port Control and Function Registers */
-#define ADIN2111_PORT_CTRL		0x33
+/* Port Function Register */
 #define ADIN2111_PORT_FUNCT		0x34
 #define ADIN2111_PORT_FUNCT_BC_DIS_P1	BIT(0)
 #define ADIN2111_PORT_FUNCT_MC_DIS_P1	BIT(1)

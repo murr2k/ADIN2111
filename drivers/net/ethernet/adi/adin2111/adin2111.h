@@ -111,6 +111,7 @@ struct adin2111_priv {
 /* Main driver */
 int adin2111_probe(struct spi_device *spi);
 void adin2111_remove(struct spi_device *spi);
+int adin2111_soft_reset(struct adin2111_priv *priv);
 
 /* SPI interface */
 int adin2111_spi_init(struct adin2111_priv *priv);
@@ -120,6 +121,8 @@ int adin2111_set_bits(struct adin2111_priv *priv, u32 reg, u32 mask);
 int adin2111_clear_bits(struct adin2111_priv *priv, u32 reg, u32 mask);
 int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
 int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
+struct regmap *adin2111_init_regmap(struct spi_device *spi);
+int adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val);
 
 /* MDIO interface */
 int adin2111_mdio_init(struct adin2111_priv *priv);
