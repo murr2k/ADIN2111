@@ -34,6 +34,8 @@ jobs:
           '5.15',
           '6.1',
           '6.5',
+          '6.6',
+          '6.8',
           'latest'
         ]
         gcc: ['9', '11', '12']
@@ -86,11 +88,29 @@ jobs:
           KERNEL_VERSION=$(uname -r)
           echo "Using current kernel: $KERNEL_VERSION"
         else
-          # Find latest minor version for the major version specified
-          KERNEL_VERSION=$(apt-cache search linux-headers-${{ matrix.kernel }} | \
-                          grep -E "linux-headers-${{ matrix.kernel }}\.[0-9]+-[0-9]+-generic" | \
-                          sort -V | tail -1 | awk '{print $1}' | \
-                          sed 's/linux-headers-//')
+          # Special handling for kernel 6.6 which might not be available
+          if [ "${{ matrix.kernel }}" = "6.6" ]; then
+            echo "::warning::Kernel 6.6 not available in standard Ubuntu repos, trying alternatives..."
+            # Try to find 6.6 or fall back to closest available
+            KERNEL_VERSION=$(apt-cache search linux-headers-6.6 | \
+                            grep -E "linux-headers-6\.6\.[0-9]+-[0-9]+-generic" | \
+                            sort -V | tail -1 | awk '{print $1}' | \
+                            sed 's/linux-headers-//')
+            if [ -z "$KERNEL_VERSION" ]; then
+              echo "::warning::Kernel 6.6 not found, using 6.5 as fallback"
+              KERNEL_VERSION=$(apt-cache search linux-headers-6.5 | \
+                              grep -E "linux-headers-6\.5\.[0-9]+-[0-9]+-generic" | \
+                              sort -V | tail -1 | awk '{print $1}' | \
+                              sed 's/linux-headers-//')
+            fi
+          else
+            # Find latest minor version for the major version specified
+            KERNEL_VERSION=$(apt-cache search linux-headers-${{ matrix.kernel }} | \
+                            grep -E "linux-headers-${{ matrix.kernel }}\.[0-9]+-[0-9]+-generic" | \
+                            sort -V | tail -1 | awk '{print $1}' | \
+                            sed 's/linux-headers-//')
+          fi
+          
           if [ -z "$KERNEL_VERSION" ]; then
             echo "::error::Could not find kernel headers for ${{ matrix.kernel }}"
             exit 1
