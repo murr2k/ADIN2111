@@ -17,8 +17,10 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        kernel: ['6.1', '6.6', '6.8', 'latest']
+        # Use different kernel versions based on trigger
+        kernel: ${{ (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[full-test]')) && fromJSON('["6.1", "6.6", "6.8", "latest"]') || fromJSON('["latest"]') }}
     name: Unit Tests (Kernel ${{ matrix.kernel }})
     
     steps:
@@ -29,15 +31,39 @@ jobs:
         
     - name: Setup kernel headers
       run: |
+        sudo apt-get update
+        
         if [ "${{ matrix.kernel }}" = "latest" ]; then
-          sudo apt-get update
-          sudo apt-get install -y linux-headers-generic build-essential
+          # Use the current kernel headers
+          KERNEL_VERSION=$(uname -r)
+          echo "Installing headers for current kernel: $KERNEL_VERSION"
+          sudo apt-get install -y --no-install-recommends \
+            linux-headers-$KERNEL_VERSION \
+            build-essential
         else
-          # Install specific kernel headers
-          sudo apt-get update
-          sudo apt-get install -y linux-headers-${{ matrix.kernel }}* || \
-            sudo apt-get install -y linux-headers-generic build-essential
+          # For specific kernel versions, find the latest patch version
+          echo "Finding latest ${{ matrix.kernel }}.x kernel headers..."
+          
+          # Get the latest available version for this kernel series
+          LATEST_KERNEL=$(apt-cache search "^linux-headers-${{ matrix.kernel }}\." | \
+                          grep -E "linux-headers-${{ matrix.kernel }}\.[0-9]+-[0-9]+-generic" | \
+                          sort -V | tail -1 | awk '{print $1}')
+          
+          if [ -n "$LATEST_KERNEL" ]; then
+            echo "Installing $LATEST_KERNEL"
+            sudo apt-get install -y --no-install-recommends \
+              $LATEST_KERNEL \
+              build-essential
+          else
+            echo "No specific headers found for ${{ matrix.kernel }}, using generic"
+            sudo apt-get install -y --no-install-recommends \
+              linux-headers-generic \
+              build-essential
+          fi
         fi
+        
+        # Display kernel header version being used
+        ls -la /lib/modules/*/build 2>/dev/null | head -1 || true
         
     - name: Install test dependencies
       run: |
