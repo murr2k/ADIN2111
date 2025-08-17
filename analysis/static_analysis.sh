@@ -65,9 +65,15 @@ if command_exists cppcheck; then
     echo -e "${GREEN}✓ CppCheck analysis complete${NC}"
     
     # Count issues
-    CPPCHECK_ERRORS=$(grep -c 'severity="error"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || echo "0")
-    CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || echo "0")
-    CPPCHECK_STYLE=$(grep -c 'severity="style"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null || echo "0")
+    if [ -f "$ANALYSIS_DIR/reports/cppcheck-full.xml" ]; then
+        CPPCHECK_ERRORS=$(grep -c 'severity="error"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
+        CPPCHECK_WARNINGS=$(grep -c 'severity="warning"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
+        CPPCHECK_STYLE=$(grep -c 'severity="style"' "$ANALYSIS_DIR/reports/cppcheck-full.xml" 2>/dev/null)
+    else
+        CPPCHECK_ERRORS=0
+        CPPCHECK_WARNINGS=0
+        CPPCHECK_STYLE=0
+    fi
     
     echo "  Errors: $CPPCHECK_ERRORS"
     echo "  Warnings: $CPPCHECK_WARNINGS" 
@@ -94,14 +100,19 @@ if [ -f "$ANALYSIS_DIR/checkpatch.pl" ]; then
         fi
     done
     
-    # Combine all checkpatch results
-    cat "$ANALYSIS_DIR/reports/checkpatch-"*.txt > "$ANALYSIS_DIR/reports/checkpatch-combined.txt"
+    # Combine all checkpatch results (exclude combined file to avoid circular reference)
+    find "$ANALYSIS_DIR/reports" -name "checkpatch-*.c.txt" -exec cat {} \; > "$ANALYSIS_DIR/reports/checkpatch-combined.txt"
     
     echo -e "${GREEN}✓ Checkpatch analysis complete${NC}"
     
     # Count issues
-    CHECKPATCH_ERRORS=$(grep -c "ERROR:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null || echo "0")
-    CHECKPATCH_WARNINGS=$(grep -c "WARNING:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null || echo "0")
+    if [ -f "$ANALYSIS_DIR/reports/checkpatch-combined.txt" ]; then
+        CHECKPATCH_ERRORS=$(grep -c "ERROR:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null)
+        CHECKPATCH_WARNINGS=$(grep -c "WARNING:" "$ANALYSIS_DIR/reports/checkpatch-combined.txt" 2>/dev/null)
+    else
+        CHECKPATCH_ERRORS=0
+        CHECKPATCH_WARNINGS=0
+    fi
     
     echo "  Errors: $CHECKPATCH_ERRORS"
     echo "  Warnings: $CHECKPATCH_WARNINGS"
