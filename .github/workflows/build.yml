@@ -180,8 +180,8 @@ jobs:
         fi
         
         # Check for module file
-        if [ ! -f "adin2111.ko" ]; then
-          echo "::error::Kernel module adin2111.ko not found after build"
+        if [ ! -f "adin2111_driver.ko" ]; then
+          echo "::error::Kernel module adin2111_driver.ko not found after build"
           exit 1
         fi
         
@@ -228,14 +228,14 @@ jobs:
         echo "::group::Module information"
         
         # Display module info
-        modinfo ./adin2111.ko
+        modinfo ./adin2111_driver.ko
         
         # Check module size
-        SIZE=$(stat -c%s adin2111.ko)
+        SIZE=$(stat -c%s adin2111_driver.ko)
         echo "Module size: $SIZE bytes"
         
         # Verify module symbols
-        nm -n adin2111.ko | head -20
+        nm -n adin2111_driver.ko | head -20
         
         echo "::endgroup::"
     
@@ -292,10 +292,10 @@ jobs:
         echo "- **Warnings**: ${{ steps.build_module.outputs.warnings || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
-        if [ -f "${{ env.DRIVER_PATH }}/adin2111.ko" ]; then
+        if [ -f "${{ env.DRIVER_PATH }}/adin2111_driver.ko" ]; then
           echo "### Module Details" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          modinfo ${{ env.DRIVER_PATH }}/adin2111.ko | head -10 >> $GITHUB_STEP_SUMMARY
+          modinfo ${{ env.DRIVER_PATH }}/adin2111_driver.ko | head -10 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         fi
 
