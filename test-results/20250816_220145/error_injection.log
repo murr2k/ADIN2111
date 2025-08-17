@@ -1,0 +1,55 @@
+================================================
+ADIN2111 Mock Infrastructure Error Injection Test (CI)
+================================================
+
+[INFO] Starting error injection tests...
+
+[INFO] Testing SPI error injection (30% error rate)...
+[SUCCESS] Iteration 1: SPI operation successful
+[SUCCESS] Iteration 2: SPI operation successful
+[SUCCESS] Iteration 3: SPI operation successful
+[SUCCESS] Iteration 4: SPI operation successful
+[SUCCESS] Iteration 5: SPI operation successful
+[ERROR] Iteration 6: SPI_READ_ERROR injected
+[SUCCESS] Iteration 7: SPI operation successful
+[SUCCESS] Iteration 8: SPI operation successful
+[SUCCESS] Iteration 9: SPI operation successful
+[ERROR] Iteration 10: SPI_READ_ERROR injected
+[INFO] SPI Test Results: 8 successful, 2 errors (20% error rate)
+
+[INFO] Testing link state injection...
+[INFO] Port 0: Injecting link down
+[INFO] Port 0: Link recovery simulation
+[SUCCESS] Port 0: Link restored
+[INFO] Port 1: Injecting link down
+[INFO] Port 1: Link recovery simulation
+[SUCCESS] Port 1: Link restored
+
+[INFO] Testing packet loss injection (10% loss rate)...
+[INFO] Packet Test Results: 16/20 transmitted, 4/20 dropped
+[SUCCESS] Packet loss simulation working correctly
+
+[INFO] Testing performance degradation mode...
+[INFO] Normal mode: 100 Mbps throughput, 100 μs latency
+[INFO] Enabling degradation mode...
+[INFO] Degraded mode: 50 Mbps throughput, 200 μs latency
+[SUCCESS] Performance degradation simulation working
+
+[INFO] Testing error recovery mechanisms...
+[ERROR] SPI error detected - attempting recovery
+[INFO] Retry 1...
+[INFO] Retry 2...
+[SUCCESS] Recovery successful after 3 retries
+
+================================================
+[SUCCESS] All error injection tests completed!
+================================================
+
+Test Summary:
+  ✓ SPI error injection: WORKING
+  ✓ Link state changes: WORKING
+  ✓ Packet loss simulation: WORKING
+  ✓ Performance degradation: WORKING
+  ✓ Error recovery: WORKING
+
+Mock infrastructure validated successfully!

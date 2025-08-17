@@ -1,0 +1,2 @@
+Usage: /home/murr2k/projects/ADIN2111/tests/scripts/validation/test_stress.sh <interface> [duration_seconds]
+Example: /home/murr2k/projects/ADIN2111/tests/scripts/validation/test_stress.sh eth0 300

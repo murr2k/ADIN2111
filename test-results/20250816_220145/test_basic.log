@@ -1,0 +1,2 @@
+Usage: /home/murr2k/projects/ADIN2111/tests/scripts/validation/test_basic.sh <interface>
+Example: /home/murr2k/projects/ADIN2111/tests/scripts/validation/test_basic.sh eth0

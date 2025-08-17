@@ -1,0 +1,16 @@
+ADIN2111 Test Results
+=====================
+Date: Sat Aug 16 22:03:14 PDT 2025
+Kernel: 6.6.87.2-microsoft-standard-WSL2
+Environment: mock
+Use Mocks: 1
+
+Test Results:
+-------------
+FAIL: test_basic_fixed - Exit code: 1
+FAIL: test_integration - Exit code: 1
+FAIL: test_stress - Exit code: 1
+FAIL: test_basic_fixed - Exit code: 1
+PASS: error_injection 
+PASS: performance_mock - Mock performance within limits
+SKIP: module_functionality - Module not loaded

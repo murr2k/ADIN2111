@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ADIN2111 Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .summary { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+        .skip { color: orange; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>ADIN2111 Test Report</h1>
+    
+    <div class="summary">
+        <h2>Summary</h2>
+        <p><strong>Date:</strong> Sat Aug 16 22:03:17 PDT 2025</p>
+        <p><strong>Kernel Version:</strong> 6.6.87.2-microsoft-standard-WSL2</p>
+        <p><strong>Test Environment:</strong> mock</p>
+        <p><strong>Total Tests:</strong> 7</p>
+        <p class="pass">Passed: 2</p>
+        <p class="fail">Failed: 4</p>
+        <p class="skip">Skipped: 1</p>
+        <p><strong>Pass Rate:</strong> 28.6%</p>
+    </div>
+    
+    <h2>Test Results</h2>
+    <table>
+        <tr>
+            <th>Test Name</th>
+            <th>Result</th>
+            <th>Details</th>
+        </tr>
+        <tr><td> test_basic_fixed - Exit code</td><td class="fail">FAIL</td><td> 1</td></tr>
+        <tr><td> test_integration - Exit code</td><td class="fail">FAIL</td><td> 1</td></tr>
+        <tr><td> test_stress - Exit code</td><td class="fail">FAIL</td><td> 1</td></tr>
+        <tr><td> test_basic_fixed - Exit code</td><td class="fail">FAIL</td><td> 1</td></tr>
+        <tr><td> error_injection </td><td class="pass">PASS</td><td></td></tr>
+        <tr><td> performance_mock - Mock performance within limits</td><td class="pass">PASS</td><td></td></tr>
+        <tr><td> module_functionality - Module not loaded</td><td class="skip">SKIP</td><td></td></tr>
+    </table>
+    
+    <div class="summary">
+        <h3>Environment Details</h3>
+        <pre>
+Hostname: DESKTOP-MALMQAC
+Kernel: Linux DESKTOP-MALMQAC 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+CPU: Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz
+Memory: 15Gi
+        </pre>
+    </div>
+</body>
+</html>

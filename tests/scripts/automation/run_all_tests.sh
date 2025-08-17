@@ -210,16 +210,55 @@ run_shell_tests() {
         for test_script in "$test_dir"/*.sh; do
             if [ -f "$test_script" ] && [ -x "$test_script" ]; then
                 test_name=$(basename "$test_script" .sh)
+                
+                # Skip original tests if fixed versions exist
+                if [ -f "$test_dir/${test_name}_fixed.sh" ] && [ -x "$test_dir/${test_name}_fixed.sh" ]; then
+                    continue
+                fi
+                
                 log_info "Executing $test_name..."
                 
-                if "$test_script" > "$RESULTS_DIR/${test_name}.log" 2>&1; then
-                    log_test_result "$test_name" "PASS"
+                # Pass interface parameter if needed (use mock interface in CI/mock mode)
+                if [[ "$test_name" == "test_basic" ]] || [[ "$test_name" == "test_integration" ]] || [[ "$test_name" == "test_stress" ]]; then
+                    if "$test_script" eth0 > "$RESULTS_DIR/${test_name}.log" 2>&1; then
+                        log_test_result "$test_name" "PASS"
+                    else
+                        exit_code=$?
+                        if [ $exit_code -eq 77 ]; then
+                            log_test_result "$test_name" "SKIP" "- Test not applicable"
+                        else
+                            log_test_result "$test_name" "FAIL" "- Exit code: $exit_code"
+                        fi
+                    fi
+                else
+                    if "$test_script" > "$RESULTS_DIR/${test_name}.log" 2>&1; then
+                        log_test_result "$test_name" "PASS"
+                    else
+                        exit_code=$?
+                        if [ $exit_code -eq 77 ]; then
+                            log_test_result "$test_name" "SKIP" "- Test not applicable"
+                        else
+                            log_test_result "$test_name" "FAIL" "- Exit code: $exit_code"
+                        fi
+                    fi
+                fi
+            fi
+        done
+        
+        # Run fixed versions if they exist
+        for test_script in "$test_dir"/*_fixed.sh; do
+            if [ -f "$test_script" ] && [ -x "$test_script" ]; then
+                test_name=$(basename "$test_script" .sh | sed 's/_fixed$//')
+                log_info "Executing ${test_name} (fixed version)..."
+                
+                if "$test_script" > "$RESULTS_DIR/${test_name}_fixed.log" 2>&1; then
+                    log_test_result "${test_name}_fixed" "PASS"
                 else
                     exit_code=$?
                     if [ $exit_code -eq 77 ]; then
-                        log_test_result "$test_name" "SKIP" "- Test not applicable"
+                        log_test_result "${test_name}_fixed" "SKIP" "- Test not applicable"
                     else
-                        log_test_result "$test_name" "FAIL" "- Exit code: $exit_code"
+                        log_test_result "${test_name}_fixed" "FAIL" "- Exit code: $exit_code"
                     fi
                 fi
             fi
