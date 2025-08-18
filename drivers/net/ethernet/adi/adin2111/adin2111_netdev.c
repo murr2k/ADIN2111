@@ -23,7 +23,21 @@ extern int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *da
 static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 {
 	struct adin2111_port *port = netdev_priv(netdev);
-	struct adin2111_priv *priv = port->priv;
+	struct adin2111_priv *priv;
+	
+	/* Validate pointers to prevent kernel panic */
+	if (!port) {
+		dev_err(&netdev->dev, "Invalid port in xmit\n");
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
+	
+	priv = port->priv;
+	if (!priv) {
+		dev_err(&netdev->dev, "Invalid priv in xmit\n");
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
+	}
 	int ret;
 
 	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {

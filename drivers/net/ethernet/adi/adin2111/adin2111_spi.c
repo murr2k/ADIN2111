@@ -22,6 +22,12 @@ static int adin2111_spi_reg_read(void *context, unsigned int reg,
 	u8 tx_buf[4];
 	u8 rx_buf[4];
 	int ret;
+	
+	/* Validate parameters to prevent kernel panic */
+	if (!spi || !val) {
+		pr_err("adin2111: Invalid SPI context or value pointer\n");
+		return -EINVAL;
+	}
 
 	/* Prepare SPI header */
 	tx_buf[0] = (ADIN2111_SPI_READ | ADIN2111_SPI_ADDR(reg)) >> 8;
@@ -48,6 +54,11 @@ static int adin2111_spi_reg_read(void *context, unsigned int reg,
 static int adin2111_spi_reg_write(void *context, unsigned int reg,
 				  unsigned int val)
 {
+	/* Validate SPI context to prevent kernel panic */
+	if (!context) {
+		pr_err("adin2111: Invalid SPI context in write\n");
+		return -EINVAL;
+	}
 	struct spi_device *spi = context;
 	u8 tx_buf[4];
 

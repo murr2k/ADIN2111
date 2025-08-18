@@ -86,6 +86,12 @@ irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
 {
 	struct adin2111_priv *priv = dev_id;
 
+	/* Validate device context to prevent kernel panic */
+	if (!priv || !priv->spi) {
+		pr_err("adin2111: Invalid device context in IRQ handler\n");
+		return IRQ_NONE;
+	}
+
 	schedule_work(&priv->irq_work);
 	return IRQ_HANDLED;
 }
@@ -423,6 +429,12 @@ void adin2111_remove(struct spi_device *spi)
 {
 	struct adin2111_priv *priv = spi_get_drvdata(spi);
 	int i;
+
+	/* Validate priv to prevent kernel panic */
+	if (!priv) {
+		dev_err(&spi->dev, "No private data in remove\n");
+		return;
+	}
 
 	dev_info(&spi->dev, "Removing ADIN2111 driver\n");
 

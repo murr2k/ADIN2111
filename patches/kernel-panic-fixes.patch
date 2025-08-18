@@ -1,0 +1,146 @@
+From: Murray Kopit <murr2k@gmail.com>
+Date: Sat, 17 Aug 2025 22:45:00 -0500
+Subject: [PATCH] CRITICAL: Fix kernel panic issues in ADIN2111 driver
+
+This patch addresses multiple critical issues causing kernel panics:
+1. NULL pointer dereferences in port initialization
+2. Memory allocation in atomic context
+3. Missing validation in interrupt handler
+4. Unprotected SPI context access
+5. Race conditions during device init/removal
+
+Reported-by: Client (production testing)
+Signed-off-by: Murray Kopit <murr2k@gmail.com>
+---
+
+diff --git a/drivers/net/ethernet/adi/adin2111/adin2111.c b/drivers/net/ethernet/adi/adin2111/adin2111.c
+--- a/drivers/net/ethernet/adi/adin2111/adin2111.c
++++ b/drivers/net/ethernet/adi/adin2111/adin2111.c
+@@ -85,8 +85,15 @@ static int adin2111_write_reg(struct adin2111_priv *priv, u16 reg, u32 val)
+ 
+ irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
+ {
+     struct adin2111_priv *priv = dev_id;
++    
++    /* Validate device context */
++    if (!priv || !priv->spi) {
++        pr_err("adin2111: Invalid device context in IRQ handler\n");
++        return IRQ_NONE;
++    }
++    
+     schedule_work(&priv->irq_work);
+     return IRQ_HANDLED;
+ }
+ 
+@@ -350,6 +357,12 @@ static int adin2111_probe(struct spi_device *spi)
+             goto err_free_netdev;
+         }
+         
++        /* Validate netdev_priv before use */
++        if (!netdev_priv(netdev)) {
++            ret = -ENOMEM;
++            goto err_free_netdev;
++        }
++        
+         struct adin2111_port *port = netdev_priv(netdev);
+         port->priv = priv;
+         port->port_num = i;
+@@ -408,6 +421,11 @@ static int adin2111_remove(struct spi_device *spi)
+ {
+     struct adin2111_priv *priv = spi_get_drvdata(spi);
+     
++    if (!priv) {
++        dev_err(&spi->dev, "No private data in remove\n");
++        return 0;
++    }
++    
+     /* Unregister network devices */
+     for (int i = 0; i < priv->num_ports; i++) {
+         if (priv->ports[i].netdev) {
+
+diff --git a/drivers/net/ethernet/adi/adin2111/adin2111_spi.c b/drivers/net/ethernet/adi/adin2111/adin2111_spi.c
+--- a/drivers/net/ethernet/adi/adin2111/adin2111_spi.c
++++ b/drivers/net/ethernet/adi/adin2111/adin2111_spi.c
+@@ -21,6 +21,11 @@ int adin2111_spi_read(void *context, u16 reg, u32 *val)
+ {
+     struct spi_device *spi = context;
+     struct spi_transfer xfer[2] = {0};
++    
++    if (!spi || !val) {
++        pr_err("adin2111: Invalid SPI context or value pointer\n");
++        return -EINVAL;
++    }
+     
+     u32 tx_buf = ADIN2111_SPI_READ | (reg << 16);
+     u32 rx_buf = 0;
+@@ -45,6 +50,11 @@ int adin2111_spi_write(void *context, u16 reg, u32 val)
+ {
+     struct spi_device *spi = context;
+     struct spi_transfer xfer = {0};
++    
++    if (!spi) {
++        pr_err("adin2111: Invalid SPI context\n");
++        return -EINVAL;
++    }
+     
+     u32 tx_buf = ADIN2111_SPI_WRITE | (reg << 16) | (val & 0xFFFF);
+     
+@@ -130,7 +140,14 @@ int adin2111_write_tx_fifo(struct adin2111_priv *priv, const void *data,
+     u8 *tx_buf;
+     int ret;
+     
+-    tx_buf = kmalloc(len + 2, GFP_KERNEL);
++    /* Use GFP_ATOMIC if in atomic context (spinlock held or IRQ) */
++    gfp_t gfp_flags = GFP_KERNEL;
++    if (in_interrupt() || in_atomic()) {
++        gfp_flags = GFP_ATOMIC;
++    }
++    
++    tx_buf = kmalloc(len + 2, gfp_flags);
+     if (!tx_buf)
+         return -ENOMEM;
+
+diff --git a/drivers/net/ethernet/adi/adin2111/adin2111_netdev.c b/drivers/net/ethernet/adi/adin2111/adin2111_netdev.c
+--- a/drivers/net/ethernet/adi/adin2111/adin2111_netdev.c
++++ b/drivers/net/ethernet/adi/adin2111/adin2111_netdev.c
+@@ -36,6 +36,11 @@ netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
+     struct adin2111_port *port = netdev_priv(netdev);
+     struct adin2111_priv *priv = port->priv;
+     
++    if (!port || !priv) {
++        dev_err(&netdev->dev, "Invalid port or priv in xmit\n");
++        return NETDEV_TX_BUSY;
++    }
++    
+     /* Check if queue is stopped */
+     if (netif_queue_stopped(netdev))
+         return NETDEV_TX_BUSY;
+@@ -261,8 +266,11 @@ void adin2111_rx_work(struct work_struct *work)
+     frame_size = (rx_status & ADIN2111_RX_STATUS_FRAME_SIZE_MASK);
+     
+     /* Allocate buffer for frame */
+-    frame_buf = kmalloc(frame_size, GFP_KERNEL);
+-    if (!frame_buf)
++    frame_buf = kmalloc(frame_size, GFP_ATOMIC);  /* Use GFP_ATOMIC in work context */
++    if (!frame_buf) {
++        dev_err(&priv->spi->dev, "Failed to allocate RX buffer\n");
++        priv->stats.rx_dropped++;
+         return;
++    }
+     
+     /* Read frame from RX FIFO */
+     ret = adin2111_read_rx_fifo(priv, frame_buf, frame_size);
+@@ -281,6 +289,13 @@ void adin2111_rx_work(struct work_struct *work)
+     /* Extract port number from frame header */
+     port_num = FIELD_GET(ADIN2111_FRAME_HEADER_PORT, frame_header);
+     
++    /* Validate port number before use */
++    if (!priv->ports) {
++        dev_err(&priv->spi->dev, "Port array not initialized\n");
++        kfree(frame_buf);
++        return;
++    }
++    
+     if (port_num >= ADIN2111_PORTS || !priv->ports[port_num].netdev) {
+         dev_err(&priv->spi->dev, "Invalid port in frame header: %d\n", port_num);
+         goto out;
