@@ -1,6 +1,6 @@
 # ADIN2111 Linux Driver - Switch Mode Implementation
 
-![Linux](https://img.shields.io/badge/Linux_Kernel-Driver-FCC624?style=flat-square&logo=linux&logoColor=black) ![License](https://img.shields.io/badge/License-GPL_2.0+-green?style=flat-square) ![Build Status](https://github.com/murr2k/ADIN2111/actions/workflows/build.yml/badge.svg) ![Hardware](https://img.shields.io/badge/Hardware-ADIN2111-purple?style=flat-square) ![Latency](https://img.shields.io/badge/Latency-<2μs-brightgreen?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)
+![Linux](https://img.shields.io/badge/Linux_Kernel-Driver-FCC624?style=flat-square&logo=linux&logoColor=black) ![License](https://img.shields.io/badge/License-GPL_2.0+-green?style=flat-square) ![Build Status](https://github.com/murr2k/ADIN2111/actions/workflows/build.yml/badge.svg) ![Test Status](https://github.com/murr2k/ADIN2111/actions/workflows/test.yml/badge.svg) ![Hardware](https://img.shields.io/badge/Hardware-ADIN2111-purple?style=flat-square) ![Progress](https://img.shields.io/badge/Progress-60%25-yellow?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)
 
 **Author:** Murray Kopit  
 **Date:** August 11, 2025
@@ -8,6 +8,15 @@
 ## 🎯 Project Overview
 
 This repository contains the enhanced Linux driver for the Analog Devices ADIN2111 dual-port 10BASE-T1L Ethernet switch. The driver properly leverages the chip's integrated hardware switching capabilities, eliminating the need for software bridging.
+
+### 📊 Implementation Status
+- ✅ **Phase 1**: Build Validation (Complete)
+- ✅ **Phase 2**: Static Code Analysis (Complete) 
+- ✅ **Phase 3**: Unit Test Execution (Complete)
+- 🔄 **Phase 4**: Performance Benchmarking (Pending)
+- 🔄 **Phase 5**: Hardware-in-Loop Testing (Optional)
+
+**Progress: 60% Complete (3/5 phases)**
 
 ## 🚀 Key Achievement
 

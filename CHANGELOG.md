@@ -5,6 +5,43 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Phase 3] - 2025-08-17
+
+### Added
+- **Comprehensive unit test framework** with environment-aware testing
+- **Mock infrastructure** for CI testing without hardware
+- **Error injection capabilities** for fault tolerance testing
+- **GitHub Actions test workflow** supporting multiple kernel versions
+- **Test runner script** with HTML report generation
+- **Virtual network setup** with veth pairs and namespaces
+- **Optimized CI/CD pipeline** reducing test time by 92%
+
+### Fixed
+- **Test script parameter issues** causing unbound variable errors
+- **Environment detection bugs** not respecting USE_MOCKS flag
+- **Mock function overrides** using wrapper functions approach
+- **Workflow optimization** preventing unnecessary kernel header installations
+- **Test framework integration** issues in CI environment
+
+### Changed
+- Optimized GitHub Actions workflow from 12+ minutes to 1-2 minutes
+- Implemented conditional kernel matrix based on trigger type
+- Enhanced test scripts with proper error handling
+- Improved mock implementations for network tools
+
+### Technical Details
+- **Module Build**: Successfully compiles `adin2111_driver.ko` in CI
+- **Test Execution Time**: 1 minute (regular), 2 minutes (full test)
+- **Environment Support**: CI, Hardware, Mock, Local detection
+- **Mock Tools**: ethtool, ip, ping, iperf3 fully mocked
+- **Kernel Versions**: Testing on 6.1, 6.6, 6.8, and latest
+
+### Files Added
+- `tests/framework/` - Test framework with environment detection
+- `tests/scripts/automation/run_all_tests.sh` - Master test runner
+- `.github/workflows/test.yml` - Optimized test workflow
+- `docs/phase3-summary.md` - Phase 3 completion documentation
+
 ## [Phase 2] - 2025-08-17
 
 ### Added
@@ -38,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Development Infrastructure
 - ✅ **Phase 1**: Build Validation (Complete)
 - ✅ **Phase 2**: Static Code Analysis (Complete)
-- 🔄 **Phase 3**: Unit test execution (Planned)
+- ✅ **Phase 3**: Unit test execution (Complete)
 - 🔄 **Phase 4**: Performance benchmarking (Planned)
 - 🔄 **Phase 5**: Hardware-in-loop testing (Optional)
 
