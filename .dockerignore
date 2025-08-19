@@ -160,7 +160,8 @@ src/WSL2-Linux-Kernel/
 # QEMU/Emulation files
 initramfs/
 rootfs/
-qemu/
+# Don't exclude qemu/ - we need the QEMU model files for Docker build
+# qemu/
 
 # Backup files
 *.backup
