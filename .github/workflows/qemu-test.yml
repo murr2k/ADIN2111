@@ -1,0 +1,292 @@
+name: QEMU Hardware Testing
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'drivers/**'
+      - 'qemu/**'
+      - 'docker/**'
+      - '.github/workflows/qemu-test.yml'
+  pull_request:
+    paths:
+      - 'drivers/**'
+      - 'qemu/**'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - functional
+          - performance
+          - stress
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/qemu-adin2111
+
+jobs:
+  build-qemu-container:
+    name: Build QEMU Container
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/qemu-adin2111.dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            JOBS=4
+
+  test-driver-qemu:
+    name: Test Driver in QEMU
+    needs: build-qemu-container
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.build-qemu-container.outputs.image-tag }}
+      options: --privileged
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        kernel: [6.1, 6.6, 6.8]
+        arch: [arm, arm64]
+        test_suite: [functional, performance]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Kernel Build
+        run: |
+          echo "Setting up kernel ${{ matrix.kernel }} for ${{ matrix.arch }}"
+          
+          # Download kernel source
+          wget -q https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz
+          tar xf linux-${{ matrix.kernel }}.tar.xz
+          cd linux-${{ matrix.kernel }}
+          
+          # Configure kernel with ADIN2111 driver
+          if [ "${{ matrix.arch }}" = "arm" ]; then
+            export ARCH=arm
+            export CROSS_COMPILE=arm-linux-gnueabihf-
+            make vexpress_defconfig
+          else
+            export ARCH=arm64
+            export CROSS_COMPILE=aarch64-linux-gnu-
+            make defconfig
+          fi
+          
+          # Enable ADIN2111 driver
+          ./scripts/config --enable CONFIG_ADIN2111
+          ./scripts/config --enable CONFIG_SPI
+          ./scripts/config --enable CONFIG_SPI_PL022
+          ./scripts/config --enable CONFIG_NET
+          ./scripts/config --enable CONFIG_ETHERNET
+          
+          # Copy our driver
+          cp -r $GITHUB_WORKSPACE/drivers/net/ethernet/adi drivers/net/ethernet/
+          
+          # Build kernel
+          make -j$(nproc) Image modules
+      
+      - name: Create Test Initramfs
+        run: |
+          # Create minimal initramfs with test scripts
+          mkdir -p initramfs/{bin,sbin,etc,proc,sys,dev,tests}
+          
+          # Copy busybox
+          wget -q https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+          chmod +x busybox
+          cp busybox initramfs/bin/
+          
+          # Create init script
+          cat > initramfs/init << 'EOF'
+          #!/bin/busybox sh
+          /bin/busybox --install -s
+          
+          # Mount essential filesystems
+          mount -t proc none /proc
+          mount -t sysfs none /sys
+          mount -t devtmpfs none /dev
+          
+          # Load ADIN2111 driver
+          modprobe adin2111
+          
+          # Run tests
+          for test in /tests/*.sh; do
+            echo "Running: $test"
+            sh $test
+          done
+          
+          # Signal completion
+          poweroff -f
+          EOF
+          chmod +x initramfs/init
+          
+          # Copy test scripts
+          cp tests/qemu/${{ matrix.test_suite }}/*.sh initramfs/tests/
+          
+          # Create initramfs archive
+          cd initramfs
+          find . | cpio -o -H newc | gzip > ../initramfs.cpio.gz
+          cd ..
+      
+      - name: Run QEMU Tests
+        timeout-minutes: 10
+        run: |
+          QEMU_CMD=""
+          if [ "${{ matrix.arch }}" = "arm" ]; then
+            QEMU_CMD="qemu-system-arm -M vexpress-a9"
+          else
+            QEMU_CMD="qemu-system-aarch64 -M virt"
+          fi
+          
+          # Run QEMU with timeout
+          timeout 300 $QEMU_CMD \
+            -kernel linux-${{ matrix.kernel }}/arch/${{ matrix.arch }}/boot/Image \
+            -initrd initramfs.cpio.gz \
+            -device adin2111,id=eth0 \
+            -device adin2111,id=eth1 \
+            -append "console=ttyAMA0 panic=1" \
+            -nographic \
+            -monitor none \
+            -serial stdio \
+            2>&1 | tee qemu-output.log
+          
+          # Check for test failures
+          if grep -q "FAIL:" qemu-output.log; then
+            echo "Tests failed!"
+            exit 1
+          fi
+          
+          echo "All tests passed!"
+      
+      - name: Parse Test Results
+        if: always()
+        run: |
+          # Extract test results from QEMU output
+          grep -E "(PASS|FAIL|SKIP):" qemu-output.log > test-results.txt || true
+          
+          # Generate summary
+          echo "## Test Results Summary" > summary.md
+          echo "Kernel: ${{ matrix.kernel }}" >> summary.md
+          echo "Architecture: ${{ matrix.arch }}" >> summary.md
+          echo "Test Suite: ${{ matrix.test_suite }}" >> summary.md
+          echo "" >> summary.md
+          
+          PASS=$(grep -c "PASS:" test-results.txt || echo 0)
+          FAIL=$(grep -c "FAIL:" test-results.txt || echo 0)
+          SKIP=$(grep -c "SKIP:" test-results.txt || echo 0)
+          
+          echo "- ✅ Passed: $PASS" >> summary.md
+          echo "- ❌ Failed: $FAIL" >> summary.md
+          echo "- ⏭️ Skipped: $SKIP" >> summary.md
+          
+          cat summary.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-test-${{ matrix.kernel }}-${{ matrix.arch }}-${{ matrix.test_suite }}
+          path: |
+            qemu-output.log
+            test-results.txt
+            summary.md
+
+  performance-analysis:
+    name: Performance Analysis
+    needs: test-driver-qemu
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: qemu-test-*-performance
+          merge-multiple: true
+      
+      - name: Analyze Performance
+        run: |
+          echo "## Performance Analysis" > performance.md
+          
+          # Parse performance metrics from test outputs
+          for log in qemu-output*.log; do
+            echo "### $log" >> performance.md
+            grep -E "Throughput:|Latency:|CPU:" $log >> performance.md || true
+            echo "" >> performance.md
+          done
+          
+          cat performance.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: Update Performance Dashboard
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Store performance metrics for trend analysis
+          mkdir -p .metrics
+          date > .metrics/timestamp
+          cp performance.md .metrics/
+          
+          # Would commit metrics here in real scenario
+
+  summary:
+    name: Test Summary
+    needs: [test-driver-qemu, performance-analysis]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Create Summary
+        run: |
+          echo "# QEMU Testing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-driver-qemu.result }}" == "success" ]; then
+            echo "✅ All QEMU tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some QEMU tests failed. Check individual job results." >> $GITHUB_STEP_SUMMARY
+          fi
