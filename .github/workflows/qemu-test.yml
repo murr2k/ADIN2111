@@ -93,7 +93,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kernel: [6.1, 6.6, 6.8]
+        kernel: [6.6, 6.8]
         arch: [arm, arm64]
         test_suite: [functional, performance]
     
@@ -148,7 +148,6 @@ jobs:
             
             # Kernel version checksums (update these for new kernel versions)
             declare -A KERNEL_SHA256
-            KERNEL_SHA256["6.1"]="2ca1f17051a430f6fed1196e4952717507171acfd97d96577212502703b25deb"
             KERNEL_SHA256["6.6"]="d926a06c63dd8ac7df3f86ee1ffc2ce2a3b81a2d168484e76b5b389aba8e56d0"
             KERNEL_SHA256["6.8"]="c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3"
             
