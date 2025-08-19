@@ -1,0 +1,51 @@
+/* STM32MP153 + ADIN2111 Device Tree Include */
+
+&spi2 {
+    status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&spi2_pins>;
+    cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
+    
+    adin2111: ethernet@0 {
+        compatible = "adi,adin2111";
+        reg = <0>;
+        spi-max-frequency = <25000000>; /* STM32MP153 SPI limit */
+        spi-cpol;
+        spi-cpha;
+        
+        interrupt-parent = <&gpioa>;
+        interrupts = <5 IRQ_TYPE_LEVEL_LOW>;
+        
+        reset-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+        
+        adi,phy-mode = "10base-t1l";
+        
+        mdio {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            
+            phy@0 {
+                reg = <0>;
+            };
+            
+            phy@1 {
+                reg = <1>;
+            };
+        };
+    };
+};
+
+&gpioa {
+    /* INT pin from ADIN2111 */
+    adin2111_int: adin2111-int {
+        gpio = <5>;
+        bias-pull-up;
+    };
+    
+    /* RESET pin to ADIN2111 */
+    adin2111_reset: adin2111-reset {
+        gpio = <6>;
+        drive-push-pull;
+        output-low;
+    };
+};
