@@ -117,52 +117,85 @@ jobs:
       - name: Configure kernel
         timeout-minutes: 2
         run: |
+          set -x  # Enable debug output
           cd linux-${{ matrix.kernel }}
-          # Use minimal config for faster builds
+          
+          # Set architecture-specific variables
           if [ "${{ matrix.arch }}" = "arm" ]; then
             export ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
-            make allnoconfig
+            make defconfig
           elif [ "${{ matrix.arch }}" = "arm64" ]; then
             export ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-            make allnoconfig
+            make defconfig
           else
-            make allnoconfig
+            export ARCH=x86_64
+            make defconfig
           fi
-          # Enable only what's needed for module building
-          echo "CONFIG_MODULES=y" >> .config
-          echo "CONFIG_NET=y" >> .config
-          echo "CONFIG_ETHERNET=y" >> .config
-          echo "CONFIG_SPI=y" >> .config
-          echo "CONFIG_PHYLIB=y" >> .config
-          echo "CONFIG_REGMAP_SPI=y" >> .config
+          
+          # Enable required configs for ADIN2111 driver
+          ./scripts/config --enable CONFIG_MODULES
+          ./scripts/config --enable CONFIG_NET
+          ./scripts/config --enable CONFIG_ETHERNET
+          ./scripts/config --enable CONFIG_NET_VENDOR_ADI
+          ./scripts/config --enable CONFIG_SPI
+          ./scripts/config --enable CONFIG_SPI_MASTER
+          ./scripts/config --enable CONFIG_PHYLIB
+          ./scripts/config --enable CONFIG_REGMAP
+          ./scripts/config --enable CONFIG_REGMAP_SPI
+          
+          # Update config
+          make olddefconfig
+          
+          # Debug: Show enabled configs
+          echo "=== Checking enabled configs ==="
+          grep -E "CONFIG_(MODULES|NET|ETHERNET|SPI|PHYLIB|REGMAP)" .config
       
       - name: Build ADIN2111 module
         timeout-minutes: 5
         run: |
+          set -x  # Enable debug output
           cd linux-${{ matrix.kernel }}
+          
+          # Set architecture-specific variables
           if [ "${{ matrix.arch }}" = "arm" ]; then
             export ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
           elif [ "${{ matrix.arch }}" = "arm64" ]; then
             export ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+          else
+            export ARCH=x86_64
           fi
-          # Quick modules_prepare with minimal config
+          
+          echo "=== Building kernel modules_prepare ==="
           make modules_prepare -j$(nproc)
-          # Copy our driver source to kernel tree
+          
+          echo "=== Copying driver source to kernel tree ==="
           mkdir -p drivers/net/ethernet/adi
           cp ../drivers/net/ethernet/adi/Makefile drivers/net/ethernet/adi/
           cp ../drivers/net/ethernet/adi/Kconfig drivers/net/ethernet/adi/
           cp -r ../drivers/net/ethernet/adi/adin2111 drivers/net/ethernet/adi/
-          # Use the existing Makefile which builds adin2111_driver.ko
-          # Build the module - MUST SUCCEED or fail the job
-          make M=drivers/net/ethernet/adi/adin2111 modules -j$(nproc)
+          
+          echo "=== Contents of driver directory ==="
+          ls -la drivers/net/ethernet/adi/adin2111/
+          
+          echo "=== Building ADIN2111 module with verbose output ==="
+          make M=drivers/net/ethernet/adi/adin2111 modules V=1
+          
+          echo "=== Checking for built module ==="
+          find drivers/net/ethernet/adi/adin2111/ -name "*.ko" -ls
+          
           # Verify the module was built
           if [ ! -f "drivers/net/ethernet/adi/adin2111/adin2111_driver.ko" ]; then
             echo "ERROR: Module build failed - adin2111_driver.ko not found!"
+            echo "=== Build directory contents ==="
+            ls -la drivers/net/ethernet/adi/adin2111/
             exit 1
           fi
+          
+          echo "SUCCESS: Module built successfully!"
       
       - name: Check module info
         run: |
+          set -x  # Enable debug output
           # Check if module was built for all architectures
           if [ -f "linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111/adin2111_driver.ko" ]; then
             echo "Module successfully built for ${{ matrix.arch }} on kernel ${{ matrix.kernel }}"
