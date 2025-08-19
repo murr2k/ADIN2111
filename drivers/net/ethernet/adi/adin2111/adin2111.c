@@ -5,6 +5,7 @@
  * Copyright 2024 Analog Devices Inc.
  */
 
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/spi/spi.h>
@@ -446,14 +447,23 @@ err_cleanup_phy:
 	return ret;
 }
 
+/* Remove function - signature changed in kernel 6.0+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+static void adin2111_remove(struct spi_device *spi)
+#else
 static int adin2111_remove(struct spi_device *spi)
+#endif
 {
 	struct adin2111_priv *priv = spi_get_drvdata(spi);
 
 	/* Validate priv to prevent kernel panic */
 	if (!priv) {
 		dev_err(&spi->dev, "No private data in remove\n");
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
 		return 0;
+#else
+		return;
+#endif
 	}
 
 	dev_info(&spi->dev, "Removing ADIN2111 driver\n");
@@ -482,7 +492,9 @@ static int adin2111_remove(struct spi_device *spi)
 	/* Reset device */
 	adin2111_soft_reset(priv);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
 	return 0;
+#endif
 }
 
 static const struct of_device_id adin2111_of_match[] = {
