@@ -297,6 +297,17 @@ int adin2111_probe(struct spi_device *spi)
 	struct net_device *netdev;
 	int ret, i;
 
+	/* Validate SPI device to prevent kernel panic */
+	if (!spi) {
+		pr_err("adin2111: NULL SPI device in probe\n");
+		return -EINVAL;
+	}
+	
+	if (!spi->dev.of_node && !spi->dev.platform_data) {
+		dev_err(&spi->dev, "No device tree or platform data\n");
+		return -ENODEV;
+	}
+
 	/* Allocate private data structure */
 	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
@@ -322,11 +333,21 @@ int adin2111_probe(struct spi_device *spi)
 		return PTR_ERR(priv->reset_gpio);
 
 	/* Initialize regmap for SPI access */
+	if (!spi->controller) {
+		dev_err(&spi->dev, "SPI controller not initialized\n");
+		return -ENODEV;
+	}
+	
 	priv->regmap = adin2111_init_regmap(spi);
 	if (IS_ERR(priv->regmap)) {
 		dev_err(&spi->dev, "Failed to initialize regmap: %ld\n",
 			PTR_ERR(priv->regmap));
 		return PTR_ERR(priv->regmap);
+	}
+	
+	if (!priv->regmap) {
+		dev_err(&spi->dev, "Regmap initialization returned NULL\n");
+		return -ENOMEM;
 	}
 
 	/* Initialize hardware */
@@ -340,6 +361,11 @@ int adin2111_probe(struct spi_device *spi)
 	ret = adin2111_phy_init(priv, 0);
 	if (ret) {
 		dev_err(&spi->dev, "PHY initialization failed: %d\n", ret);
+		/* PHY init failure is critical - clean up properly */
+		if (priv->irq_work.func) {
+			cancel_work_sync(&priv->irq_work);
+		}
+		adin2111_soft_reset(priv);
 		return ret;
 	}
 
@@ -396,13 +422,16 @@ int adin2111_probe(struct spi_device *spi)
 	if (spi->irq) {
 		ret = devm_request_threaded_irq(&spi->dev, spi->irq, NULL,
 						adin2111_irq_handler,
-						IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+						IRQF_TRIGGER_FALLING | IRQF_ONESHOT | IRQF_SHARED,
 						dev_name(&spi->dev), priv);
 		if (ret) {
-			dev_err(&spi->dev, "Failed to request IRQ: %d\n", ret);
-			goto err_cleanup_netdevs;
+			/* IRQ request failure is non-fatal, continue without interrupt */
+			dev_warn(&spi->dev, "Failed to request IRQ %d: %d, continuing without interrupts\n",
+				 spi->irq, ret);
+			spi->irq = 0;  /* Clear IRQ to indicate polling mode */
+		} else {
+			dev_info(&spi->dev, "IRQ %d registered\n", spi->irq);
 		}
-		dev_info(&spi->dev, "IRQ %d registered\n", spi->irq);
 	}
 
 	dev_info(&spi->dev, "ADIN2111 driver probe completed successfully\n");

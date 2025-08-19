@@ -160,6 +160,12 @@ int adin2111_phy_init(struct adin2111_priv *priv, int port)
 	struct mii_bus *mii_bus;
 	int ret, i;
 
+	/* Validate parameters to prevent kernel panic */
+	if (!priv || !priv->spi) {
+		pr_err("adin2111: Invalid context in phy_init\n");
+		return -EINVAL;
+	}
+
 	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
 	if (!mii_bus)
 		return -ENOMEM;
@@ -174,9 +180,16 @@ int adin2111_phy_init(struct adin2111_priv *priv, int port)
 	/* Internal PHYs are at addresses 1 and 2 */
 	mii_bus->phy_mask = 0xFFFFFFFC;  /* Allow only addresses 1 and 2 */
 
+	/* Ensure MDIO bus operations are safe */
+	if (!mii_bus->read || !mii_bus->write) {
+		dev_err(&priv->spi->dev, "MDIO bus operations not set\n");
+		return -EINVAL;
+	}
+
 	ret = devm_mdiobus_register(&priv->spi->dev, mii_bus);
 	if (ret) {
 		dev_err(&priv->spi->dev, "Failed to register MDIO bus: %d\n", ret);
+		devm_mdiobus_free(&priv->spi->dev, mii_bus);
 		return ret;
 	}
 
