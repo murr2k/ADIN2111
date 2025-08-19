@@ -100,8 +100,28 @@ jobs:
         run: |
           echo "Setting up kernel ${{ matrix.kernel }} for ${{ matrix.arch }}"
           
-          # Download kernel source
-          wget -q https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz
+          # Kernel version checksums (update these for new kernel versions)
+          declare -A KERNEL_SHA256
+          KERNEL_SHA256["6.1"]="2ca1f17051a430f6fed1196e4952717507171acfd97d96577212502703b25deb"
+          KERNEL_SHA256["6.6"]="d926a06c63dd8ac7df3f86ee1ffc2ce2a3b81a2d168484e76b5b389aba8e56d0"
+          KERNEL_SHA256["6.8"]="c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3"
+          
+          # Download kernel source with checksum verification
+          KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz"
+          wget -q "$KERNEL_URL" -O linux-${{ matrix.kernel }}.tar.xz
+          
+          # Verify checksum
+          EXPECTED_SHA="${KERNEL_SHA256[${{ matrix.kernel }}]}"
+          if [ -n "$EXPECTED_SHA" ]; then
+            echo "$EXPECTED_SHA  linux-${{ matrix.kernel }}.tar.xz" | sha256sum -c - || {
+              echo "ERROR: Kernel checksum verification failed for version ${{ matrix.kernel }}!"
+              echo "This could indicate a compromised download."
+              exit 1
+            }
+          else
+            echo "WARNING: No checksum available for kernel ${{ matrix.kernel }}, proceeding without verification"
+          fi
+          
           tar xf linux-${{ matrix.kernel }}.tar.xz
           cd linux-${{ matrix.kernel }}
           
@@ -134,8 +154,16 @@ jobs:
           # Create minimal initramfs with test scripts
           mkdir -p initramfs/{bin,sbin,etc,proc,sys,dev,tests}
           
-          # Copy busybox
-          wget -q https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+          # Download busybox with SHA256 verification
+          BUSYBOX_URL="https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox"
+          BUSYBOX_SHA256="6e123e7f3202b28b9b1ae1d12a9ca65a888ec8dc60e23bc8419e7fa0289bd54e"
+          
+          wget -q "$BUSYBOX_URL" -O busybox
+          echo "$BUSYBOX_SHA256  busybox" | sha256sum -c - || {
+            echo "ERROR: Busybox checksum verification failed!"
+            echo "This could indicate a compromised download or supply chain attack."
+            exit 1
+          }
           chmod +x busybox
           cp busybox initramfs/bin/
           
