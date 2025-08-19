@@ -1,0 +1,20 @@
+FROM ubuntu:24.04
+
+# Install minimal requirements
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc-arm-linux-gnueabihf \
+    qemu-system-arm \
+    build-essential \
+    wget curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /test
+
+# Copy driver files
+COPY drivers/ /test/drivers/
+COPY *.c *.sh /test/
+
+RUN chmod +x *.sh 2>/dev/null || true
+
+CMD ["/bin/bash"]

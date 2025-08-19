@@ -1,0 +1,20 @@
+#!/bin/sh
+
+echo ""
+echo "=== ADIN2111 Test Environment ==="
+echo ""
+
+# Run the test
+/bin/test_adin2111
+
+# Check exit code
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "SUCCESS: All tests passed!"
+else
+    echo ""
+    echo "FAILURE: Some tests failed!"
+fi
+
+# Exit cleanly
+exit 0

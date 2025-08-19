@@ -1,0 +1,44 @@
+STM32MP153 + ADIN2111 Build Artifacts
+======================================
+
+Directory Structure:
+stm32mp153-adin2111-build/
+├── drivers/
+│   └── net/ethernet/adi/adin2111/
+│       └── adin2111.c          # Linux kernel driver
+├── qemu/
+│   └── hw/net/
+│       └── adin2111.c          # QEMU device model
+├── stm32mp153-adin2111.dts     # Device tree
+├── test_stm32mp153_adin2111.c  # Test suite
+├── test_native                  # Native test binary
+├── test_arm                     # ARM test binary (if toolchain available)
+├── Makefile                     # Kernel module Makefile
+├── Dockerfile                   # Docker build environment
+├── test-output.log             # Test execution log
+└── test-report.txt             # Test report
+
+Capabilities:
+- Full STM32MP153 hardware simulation
+- ADIN2111 SPI interface emulation
+- Linux driver testing
+- Performance benchmarking
+- Error recovery testing
+
+Test Coverage:
+1. STM32MP153 configuration validation
+2. ADIN2111 device identification
+3. Driver probe sequence
+4. Interrupt configuration
+5. Network link status
+6. Packet transmission
+7. Packet reception
+8. Performance metrics
+9. Error recovery
+10. Module unload
+
+Usage:
+- Native test: ./test_native
+- ARM test: qemu-arm ./test_arm
+- Docker: docker build -t stm32mp153-test . && docker run stm32mp153-test
+- Kernel module: make (requires kernel headers)

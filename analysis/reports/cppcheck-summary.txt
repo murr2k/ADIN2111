@@ -1,4 +1,4 @@
-/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:425:6: style: The scope of the variable 'i' can be reduced. [variableScope]
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:460:6: style: The scope of the variable 'i' can be reduced. [variableScope]
  int i;
      ^
 /home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c:85:49: style: inconclusive: Function 'adin2111_irq_handler' argument 2 names different: declaration 'data' definition 'dev_id'. [funcArgNamesDifferent]
@@ -16,7 +16,7 @@ irqreturn_t adin2111_irq_handler(int irq, void *dev_id)
 /home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:161:11: style: The scope of the variable 'i' can be reduced. [variableScope]
  int ret, i;
           ^
-/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:202:6: style: The scope of the variable 'i' can be reduced. [variableScope]
+/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:215:6: style: The scope of the variable 'i' can be reduced. [variableScope]
  int i;
      ^
 /home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c:37:49: style: inconclusive: Function 'adin2111_mdio_read' argument 2 names different: declaration 'phy_id' definition 'addr'. [funcArgNamesDifferent]

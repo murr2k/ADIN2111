@@ -3,7 +3,7 @@
     <cppcheck version="2.7"/>
     <errors>
         <error id="variableScope" severity="style" msg="The scope of the variable &apos;i&apos; can be reduced." verbose="The scope of the variable &apos;i&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c">
-            <location file="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c" line="425" column="6"/>
+            <location file="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c" line="460" column="6"/>
             <symbol>i</symbol>
         </error>
         <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_irq_handler&apos; argument 2 names different: declaration &apos;data&apos; definition &apos;dev_id&apos;." verbose="Function &apos;adin2111_irq_handler&apos; argument 2 names different: declaration &apos;data&apos; definition &apos;dev_id&apos;." cwe="628" inconclusive="true" file0="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111.c">
@@ -20,7 +20,7 @@
             <symbol>i</symbol>
         </error>
         <error id="variableScope" severity="style" msg="The scope of the variable &apos;i&apos; can be reduced." verbose="The scope of the variable &apos;i&apos; can be reduced. Warning: Be careful when fixing this message, especially when there are inner loops. Here is an example where cppcheck will write that the scope for &apos;i&apos; can be reduced:\012void f(int x)\012{\012    int i = 0;\012    if (x) {\012        // it&apos;s safe to move &apos;int i = 0;&apos; here\012        for (int n = 0; n &lt; 10; ++n) {\012            // it is possible but not safe to move &apos;int i = 0;&apos; here\012            do_something(&amp;i);\012        }\012    }\012}\012When you see this message it is always safe to reduce the variable scope 1 level." cwe="398" file0="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">
-            <location file="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="202" column="6"/>
+            <location file="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c" line="215" column="6"/>
             <symbol>i</symbol>
         </error>
         <error id="funcArgNamesDifferent" severity="style" msg="Function &apos;adin2111_mdio_read&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." verbose="Function &apos;adin2111_mdio_read&apos; argument 2 names different: declaration &apos;phy_id&apos; definition &apos;addr&apos;." cwe="628" inconclusive="true" file0="/home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111/adin2111_mdio.c">

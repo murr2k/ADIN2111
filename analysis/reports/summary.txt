@@ -1,6 +1,6 @@
 ADIN2111 Static Code Analysis Summary
 ====================================
-Date: Sat Aug 16 20:49:33 PDT 2025
+Date: Mon Aug 18 22:47:02 PDT 2025
 Driver Path: /home/murr2k/projects/ADIN2111/drivers/net/ethernet/adi/adin2111
 
 CppCheck Results:
@@ -9,13 +9,13 @@ CppCheck Results:
   Style Issues: 9
 
 Checkpatch Results:
-  Errors: 0
-  Warnings: 14
+  Errors: 6
+  Warnings: 15
 
 Custom Analysis:
-  Potential Issues: 309
+  Potential Issues: 318
 
-Total Issues Found: 323
+Total Issues Found: 339
 
 Recommendations:
 1. Fix all checkpatch errors (coding style violations)

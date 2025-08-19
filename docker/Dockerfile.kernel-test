@@ -1,0 +1,38 @@
+FROM ubuntu:24.04
+
+# Install build dependencies and QEMU
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc-arm-linux-gnueabihf \
+    g++-arm-linux-gnueabihf \
+    qemu-system-arm \
+    bc bison flex \
+    libssl-dev libelf-dev \
+    git wget curl cpio file \
+    python3 python3-pip \
+    device-tree-compiler \
+    kmod \
+    gdb-multiarch \
+    strace \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up cross-compilation environment
+ENV ARCH=arm
+ENV CROSS_COMPILE=arm-linux-gnueabihf-
+ENV TARGET_CPU=cortex-a7
+
+# Create working directory
+WORKDIR /kernel-test
+
+# Copy ADIN2111 driver source
+COPY drivers/ /kernel-test/drivers/
+COPY qemu/ /kernel-test/qemu/
+
+# Create kernel module build infrastructure
+RUN mkdir -p /kernel-test/module
+
+# Copy test scripts
+COPY *.sh /kernel-test/
+RUN chmod +x /kernel-test/*.sh
+
+CMD ["/bin/bash"]

@@ -3,35 +3,37 @@ Custom analysis for adin2111_netdev.c
 
 Checking for missing error handling...
 25:	struct adin2111_port *port = netdev_priv(netdev);
-64:	struct adin2111_port *port = netdev_priv(netdev);
-84:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P1 |
-87:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P2 |
-107:	struct adin2111_port *port = netdev_priv(netdev);
-140:	struct adin2111_port *port = netdev_priv(netdev);
-149:	struct adin2111_port *port = netdev_priv(netdev);
-163:		u32 mac_upper = (netdev->dev_addr[0] << 8) | netdev->dev_addr[1];
-164:		u32 mac_lower = (netdev->dev_addr[2] << 24) | (netdev->dev_addr[3] << 16) |
-214:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
-219:	frame_header = FIELD_PREP(ADIN2111_FRAME_HEADER_LEN_MASK, skb->len) |
-265:	frame_buf = kmalloc(frame_size, GFP_KERNEL);
-277:	frame_header = (frame_buf[0] << 8) | frame_buf[1];
-278:	port_mask = FIELD_GET(ADIN2111_FRAME_HEADER_PORT_MASK, frame_header);
-282:		port_num = (port_mask & BIT(1)) ? 1 : 0;
-291:		port = netdev_priv(netdev);
-295:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
-305:	skb->protocol = eth_type_trans(skb, netdev);
-324:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
-332:	port = netdev_priv(netdev);
+78:	struct adin2111_port *port = netdev_priv(netdev);
+98:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P1 |
+101:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P2 |
+121:	struct adin2111_port *port = netdev_priv(netdev);
+154:	struct adin2111_port *port = netdev_priv(netdev);
+163:	struct adin2111_port *port = netdev_priv(netdev);
+177:		u32 mac_upper = (netdev->dev_addr[0] << 8) | netdev->dev_addr[1];
+178:		u32 mac_lower = (netdev->dev_addr[2] << 24) | (netdev->dev_addr[3] << 16) |
+228:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
+233:	frame_header = FIELD_PREP(ADIN2111_FRAME_HEADER_LEN_MASK, skb->len) |
+279:	frame_buf = kmalloc(frame_size, GFP_KERNEL);
+291:	frame_header = (frame_buf[0] << 8) | frame_buf[1];
+292:	port_mask = FIELD_GET(ADIN2111_FRAME_HEADER_PORT_MASK, frame_header);
+296:		port_num = (port_mask & BIT(1)) ? 1 : 0;
+305:		port = netdev_priv(netdev);
+309:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
+319:	skb->protocol = eth_type_trans(skb, netdev);
+338:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
+346:	port = netdev_priv(netdev);
 
 Checking for potential memory leaks...
-214:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
-265:	frame_buf = kmalloc(frame_size, GFP_KERNEL);
-295:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
-324:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
+228:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
+279:	frame_buf = kmalloc(frame_size, GFP_KERNEL);
+309:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
+338:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
 31:		dev_kfree_skb_any(skb);
-51:		dev_kfree_skb_any(skb);
-239:	kfree(frame_buf);
-316:	kfree(frame_buf);
+38:		dev_kfree_skb_any(skb);
+45:		dev_kfree_skb_any(skb);
+65:		dev_kfree_skb_any(skb);
+253:	kfree(frame_buf);
+330:	kfree(frame_buf);
 
 Checking for hardcoded values...
 3: * ADIN2111 Dual Port Industrial Ethernet Switch/PHY
@@ -41,72 +43,72 @@ Checking for hardcoded values...
 20:extern int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
 23:static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 25:	struct adin2111_port *port = netdev_priv(netdev);
-26:	struct adin2111_priv *priv = port->priv;
-29:	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {
-40:	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
-41:	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
-47:	ret = adin2111_tx_frame(priv, skb, port->port_num);
-62:static int adin2111_open(struct net_device *netdev)
-64:	struct adin2111_port *port = netdev_priv(netdev);
-65:	struct adin2111_priv *priv = port->priv;
-78:		ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
-84:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P1 |
-85:					    ADIN2111_PORT_FUNCT_MC_DIS_P1);
-87:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P2 |
-88:					    ADIN2111_PORT_FUNCT_MC_DIS_P2);
-91:		ret = adin2111_write_reg(priv, ADIN2111_PORT_FUNCT, port_func_reg);
-105:static int adin2111_stop(struct net_device *netdev)
-107:	struct adin2111_port *port = netdev_priv(netdev);
-108:	struct adin2111_priv *priv = port->priv;
-121:		int ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
-124:				port_func_reg |= ADIN2111_PORT_FUNCT_BC_DIS_P1 |
-125:						 ADIN2111_PORT_FUNCT_MC_DIS_P1;
-127:				port_func_reg |= ADIN2111_PORT_FUNCT_BC_DIS_P2 |
-128:						 ADIN2111_PORT_FUNCT_MC_DIS_P2;
-130:			adin2111_write_reg(priv, ADIN2111_PORT_FUNCT, port_func_reg);
-137:static void adin2111_get_stats64(struct net_device *netdev,
-140:	struct adin2111_port *port = netdev_priv(netdev);
-147:static int adin2111_netdev_set_mac_address(struct net_device *netdev, void *addr)
-149:	struct adin2111_port *port = netdev_priv(netdev);
-150:	struct adin2111_priv *priv = port->priv;
-167:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_UPR, mac_upper);
-171:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_LWR, mac_lower);
-176:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_UPR, 0xFFFF);
-180:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_LWR, 0xFFFFFFFF);
-188:static int adin2111_change_mtu(struct net_device *netdev, int new_mtu)
-190:	if (new_mtu < ETH_ZLEN || new_mtu > (ADIN2111_MAX_FRAME_SIZE - ETH_HLEN))
-198:	.ndo_open		= adin2111_open,
-199:	.ndo_stop		= adin2111_stop,
-200:	.ndo_start_xmit		= adin2111_start_xmit,
-201:	.ndo_get_stats64	= adin2111_get_stats64,
-202:	.ndo_set_mac_address	= adin2111_netdev_set_mac_address,
-203:	.ndo_change_mtu		= adin2111_change_mtu,
-207:int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port)
-214:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
-219:	frame_header = FIELD_PREP(ADIN2111_FRAME_HEADER_LEN_MASK, skb->len) |
-220:		       FIELD_PREP(ADIN2111_FRAME_HEADER_PORT_MASK, port);
-226:	memcpy(frame_buf + ADIN2111_FRAME_HEADER_LEN, skb->data, skb->len);
-229:	ret = adin2111_write_reg(priv, ADIN2111_TX_FSIZE,
-230:				 skb->len + ADIN2111_FRAME_HEADER_LEN);
-235:	ret = adin2111_write_fifo(priv, ADIN2111_TX,
-236:				  frame_buf, skb->len + ADIN2111_FRAME_HEADER_LEN);
-243:void adin2111_rx_handler(struct adin2111_priv *priv)
-249:	struct adin2111_port *port;
-254:	ret = adin2111_read_reg(priv, ADIN2111_RX_FSIZE, &rx_fsize);
-259:	if (frame_size < ADIN2111_FRAME_HEADER_LEN ||
-260:	    frame_size > ADIN2111_MAX_FRAME_SIZE + ADIN2111_FRAME_HEADER_LEN) {
-270:	ret = adin2111_read_fifo(priv, ADIN2111_RX, frame_buf, frame_size);
-278:	port_mask = FIELD_GET(ADIN2111_FRAME_HEADER_PORT_MASK, frame_header);
-283:		if (port_num >= ADIN2111_PORTS || !priv->ports[port_num].netdev) {
-295:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
-302:	skb_put_data(skb, frame_buf + ADIN2111_FRAME_HEADER_LEN,
-303:		     frame_size - ADIN2111_FRAME_HEADER_LEN);
-319:struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num)
-322:	struct adin2111_port *port;
-324:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
-329:	netdev->netdev_ops = &adin2111_netdev_ops;
-360:	netdev->max_mtu = ADIN2111_MAX_FRAME_SIZE - ETH_HLEN;
-365:MODULE_DESCRIPTION("ADIN2111 Network Device Operations");
+26:	struct adin2111_priv *priv;
+43:	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {
+54:	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
+55:	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
+61:	ret = adin2111_tx_frame(priv, skb, port->port_num);
+76:static int adin2111_open(struct net_device *netdev)
+78:	struct adin2111_port *port = netdev_priv(netdev);
+79:	struct adin2111_priv *priv = port->priv;
+92:		ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
+98:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P1 |
+99:					    ADIN2111_PORT_FUNCT_MC_DIS_P1);
+101:			port_func_reg &= ~(ADIN2111_PORT_FUNCT_BC_DIS_P2 |
+102:					    ADIN2111_PORT_FUNCT_MC_DIS_P2);
+105:		ret = adin2111_write_reg(priv, ADIN2111_PORT_FUNCT, port_func_reg);
+119:static int adin2111_stop(struct net_device *netdev)
+121:	struct adin2111_port *port = netdev_priv(netdev);
+122:	struct adin2111_priv *priv = port->priv;
+135:		int ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
+138:				port_func_reg |= ADIN2111_PORT_FUNCT_BC_DIS_P1 |
+139:						 ADIN2111_PORT_FUNCT_MC_DIS_P1;
+141:				port_func_reg |= ADIN2111_PORT_FUNCT_BC_DIS_P2 |
+142:						 ADIN2111_PORT_FUNCT_MC_DIS_P2;
+144:			adin2111_write_reg(priv, ADIN2111_PORT_FUNCT, port_func_reg);
+151:static void adin2111_get_stats64(struct net_device *netdev,
+154:	struct adin2111_port *port = netdev_priv(netdev);
+161:static int adin2111_netdev_set_mac_address(struct net_device *netdev, void *addr)
+163:	struct adin2111_port *port = netdev_priv(netdev);
+164:	struct adin2111_priv *priv = port->priv;
+181:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_UPR, mac_upper);
+185:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_FILTER_LWR, mac_lower);
+190:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_UPR, 0xFFFF);
+194:		ret = adin2111_write_reg(priv, ADIN2111_MAC_ADDR_MASK_LWR, 0xFFFFFFFF);
+202:static int adin2111_change_mtu(struct net_device *netdev, int new_mtu)
+204:	if (new_mtu < ETH_ZLEN || new_mtu > (ADIN2111_MAX_FRAME_SIZE - ETH_HLEN))
+212:	.ndo_open		= adin2111_open,
+213:	.ndo_stop		= adin2111_stop,
+214:	.ndo_start_xmit		= adin2111_start_xmit,
+215:	.ndo_get_stats64	= adin2111_get_stats64,
+216:	.ndo_set_mac_address	= adin2111_netdev_set_mac_address,
+217:	.ndo_change_mtu		= adin2111_change_mtu,
+221:int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port)
+228:	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
+233:	frame_header = FIELD_PREP(ADIN2111_FRAME_HEADER_LEN_MASK, skb->len) |
+234:		       FIELD_PREP(ADIN2111_FRAME_HEADER_PORT_MASK, port);
+240:	memcpy(frame_buf + ADIN2111_FRAME_HEADER_LEN, skb->data, skb->len);
+243:	ret = adin2111_write_reg(priv, ADIN2111_TX_FSIZE,
+244:				 skb->len + ADIN2111_FRAME_HEADER_LEN);
+249:	ret = adin2111_write_fifo(priv, ADIN2111_TX,
+250:				  frame_buf, skb->len + ADIN2111_FRAME_HEADER_LEN);
+257:void adin2111_rx_handler(struct adin2111_priv *priv)
+263:	struct adin2111_port *port;
+268:	ret = adin2111_read_reg(priv, ADIN2111_RX_FSIZE, &rx_fsize);
+273:	if (frame_size < ADIN2111_FRAME_HEADER_LEN ||
+274:	    frame_size > ADIN2111_MAX_FRAME_SIZE + ADIN2111_FRAME_HEADER_LEN) {
+284:	ret = adin2111_read_fifo(priv, ADIN2111_RX, frame_buf, frame_size);
+292:	port_mask = FIELD_GET(ADIN2111_FRAME_HEADER_PORT_MASK, frame_header);
+297:		if (port_num >= ADIN2111_PORTS || !priv->ports[port_num].netdev) {
+309:	skb = netdev_alloc_skb(netdev, frame_size - ADIN2111_FRAME_HEADER_LEN + NET_IP_ALIGN);
+316:	skb_put_data(skb, frame_buf + ADIN2111_FRAME_HEADER_LEN,
+317:		     frame_size - ADIN2111_FRAME_HEADER_LEN);
+333:struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num)
+336:	struct adin2111_port *port;
+338:	netdev = alloc_etherdev(sizeof(struct adin2111_port));
+343:	netdev->netdev_ops = &adin2111_netdev_ops;
+374:	netdev->max_mtu = ADIN2111_MAX_FRAME_SIZE - ETH_HLEN;
+379:MODULE_DESCRIPTION("ADIN2111 Network Device Operations");
 
 Checking for missing __iomem annotations...
-147:static int adin2111_netdev_set_mac_address(struct net_device *netdev, void *addr)
+161:static int adin2111_netdev_set_mac_address(struct net_device *netdev, void *addr)

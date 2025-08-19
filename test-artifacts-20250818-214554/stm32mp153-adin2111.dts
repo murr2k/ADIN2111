@@ -1,0 +1,116 @@
+/dts-v1/;
+
+/ {
+    model = "STM32MP153 + ADIN2111 Test Board";
+    compatible = "st,stm32mp153", "arm,cortex-a7";
+    #address-cells = <1>;
+    #size-cells = <1>;
+    
+    chosen {
+        bootargs = "console=ttySTM0,115200 root=/dev/ram0 rw";
+        stdout-path = "serial0:115200n8";
+    };
+    
+    memory@c0000000 {
+        device_type = "memory";
+        reg = <0xc0000000 0x20000000>; /* 512MB */
+    };
+    
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        
+        cpu0: cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,cortex-a7";
+            reg = <0>;
+            clock-frequency = <650000000>; /* 650MHz */
+        };
+    };
+    
+    clocks {
+        clk_hse: clk-hse {
+            #clock-cells = <0>;
+            compatible = "fixed-clock";
+            clock-frequency = <24000000>;
+        };
+    };
+    
+    soc {
+        compatible = "simple-bus";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+        
+        /* SPI2 Controller for ADIN2111 */
+        spi2: spi@4000b000 {
+            compatible = "st,stm32h7-spi";
+            reg = <0x4000b000 0x400>;
+            interrupts = <36>;
+            clocks = <&clk_hse>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+            
+            /* ADIN2111 Dual-Port Ethernet */
+            adin2111: ethernet@0 {
+                compatible = "adi,adin2111";
+                reg = <0>;
+                spi-max-frequency = <25000000>; /* 25MHz max for STM32MP153 */
+                interrupt-parent = <&gpioa>;
+                interrupts = <5 1>; /* GPIOA Pin 5, falling edge */
+                reset-gpios = <&gpioa 6 1>; /* GPIOA Pin 6, active low */
+                
+                /* Switch mode configuration */
+                adi,switch-mode;
+                adi,cut-through;
+                adi,tx-fcs-validation;
+                
+                /* Port configuration */
+                port@0 {
+                    reg = <0>;
+                    label = "lan0";
+                    phy-handle = <&phy0>;
+                };
+                
+                port@1 {
+                    reg = <1>;
+                    label = "lan1";
+                    phy-handle = <&phy1>;
+                };
+                
+                mdio {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    
+                    phy0: ethernet-phy@1 {
+                        reg = <1>;
+                    };
+                    
+                    phy1: ethernet-phy@2 {
+                        reg = <2>;
+                    };
+                };
+            };
+        };
+        
+        /* GPIO A for interrupts and reset */
+        gpioa: gpio@50002000 {
+            compatible = "st,stm32-gpio";
+            reg = <0x50002000 0x400>;
+            gpio-controller;
+            #gpio-cells = <2>;
+            interrupt-controller;
+            #interrupt-cells = <2>;
+        };
+        
+        /* UART4 for console */
+        serial0: serial@40010000 {
+            compatible = "st,stm32-uart";
+            reg = <0x40010000 0x400>;
+            interrupts = <52>;
+            clocks = <&clk_hse>;
+            status = "okay";
+        };
+    };
+};

@@ -302,7 +302,7 @@ int adin2111_probe(struct spi_device *spi)
 		pr_err("adin2111: NULL SPI device in probe\n");
 		return -EINVAL;
 	}
-	
+
 	if (!spi->dev.of_node && !spi->dev.platform_data) {
 		dev_err(&spi->dev, "No device tree or platform data\n");
 		return -ENODEV;
@@ -337,14 +337,14 @@ int adin2111_probe(struct spi_device *spi)
 		dev_err(&spi->dev, "SPI controller not initialized\n");
 		return -ENODEV;
 	}
-	
+
 	priv->regmap = adin2111_init_regmap(spi);
 	if (IS_ERR(priv->regmap)) {
 		dev_err(&spi->dev, "Failed to initialize regmap: %ld\n",
 			PTR_ERR(priv->regmap));
 		return PTR_ERR(priv->regmap);
 	}
-	
+
 	if (!priv->regmap) {
 		dev_err(&spi->dev, "Regmap initialization returned NULL\n");
 		return -ENOMEM;

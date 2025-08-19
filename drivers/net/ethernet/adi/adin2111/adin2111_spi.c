@@ -22,7 +22,7 @@ static int adin2111_spi_reg_read(void *context, unsigned int reg,
 	u8 tx_buf[4];
 	u8 rx_buf[4];
 	int ret;
-	
+
 	/* Validate parameters to prevent kernel panic */
 	if (!spi || !val) {
 		pr_err("adin2111: Invalid SPI context or value pointer\n");

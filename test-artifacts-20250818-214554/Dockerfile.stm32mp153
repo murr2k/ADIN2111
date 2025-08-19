@@ -1,0 +1,44 @@
+FROM ubuntu:24.04
+
+# Install comprehensive build environment
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Cross-compilation tools
+    gcc-arm-linux-gnueabihf \
+    g++-arm-linux-gnueabihf \
+    # QEMU for ARM
+    qemu-system-arm \
+    qemu-user-static \
+    # Kernel build requirements
+    build-essential \
+    bc bison flex \
+    libssl-dev libelf-dev \
+    # Utilities
+    git wget curl rsync \
+    cpio kmod file \
+    device-tree-compiler \
+    u-boot-tools \
+    # Debugging tools
+    gdb-multiarch \
+    strace \
+    tcpdump \
+    iproute2 \
+    net-tools \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up cross-compilation environment
+ENV ARCH=arm
+ENV CROSS_COMPILE=arm-linux-gnueabihf-
+ENV TARGET_CPU=cortex-a7
+
+WORKDIR /stm32mp153
+
+# Copy driver and QEMU model sources
+COPY drivers/ /stm32mp153/drivers/
+COPY qemu/ /stm32mp153/qemu/
+
+# Create build scripts
+COPY *.sh /stm32mp153/
+RUN chmod +x *.sh 2>/dev/null || true
+
+CMD ["/bin/bash"]

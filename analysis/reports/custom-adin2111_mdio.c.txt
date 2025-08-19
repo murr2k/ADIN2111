@@ -6,10 +6,11 @@ Checking for missing error handling...
 92:	mdio_val = FIELD_PREP(ADIN2111_MDIO_ACC_MDIO_ST, ADIN2111_MDIO_ST_CLAUSE_22) |
 113:	struct adin2111_port *port = netdev_priv(netdev);
 136:	phydev = phy_connect(port->netdev, phy_id, adin2111_link_change,
-163:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
+169:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
 
 Checking for potential memory leaks...
-163:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
+169:	mii_bus = devm_mdiobus_alloc(&priv->spi->dev);
+192:		/* devm resources are automatically freed on error */
 
 Checking for hardcoded values...
 3: * ADIN2111 Dual Port Industrial Ethernet Switch/PHY
@@ -52,13 +53,14 @@ Checking for hardcoded values...
 146:	phy_remove_link_mode(phydev, ETHTOOL_LINK_MODE_1000baseT_Full_BIT);
 147:	phy_set_max_speed(phydev, SPEED_100);
 158:int adin2111_phy_init(struct adin2111_priv *priv, int port)
-167:	mii_bus->name = "ADIN2111 MDIO";
-168:	mii_bus->read = adin2111_mdio_read;
-169:	mii_bus->write = adin2111_mdio_write;
-187:		for (i = 0; i < ADIN2111_PORTS; i++) {
-189:				ret = adin2111_phy_connect_port(priv, i);
-200:void adin2111_phy_uninit(struct adin2111_priv *priv, int port)
-205:		for (i = 0; i < ADIN2111_PORTS; i++) {
-216:MODULE_DESCRIPTION("ADIN2111 MDIO/PHY Management");
+165:		pr_err("adin2111: Invalid context in phy_init\n");
+173:	mii_bus->name = "ADIN2111 MDIO";
+174:	mii_bus->read = adin2111_mdio_read;
+175:	mii_bus->write = adin2111_mdio_write;
+200:		for (i = 0; i < ADIN2111_PORTS; i++) {
+202:				ret = adin2111_phy_connect_port(priv, i);
+213:void adin2111_phy_uninit(struct adin2111_priv *priv, int port)
+218:		for (i = 0; i < ADIN2111_PORTS; i++) {
+229:MODULE_DESCRIPTION("ADIN2111 MDIO/PHY Management");
 
 Checking for missing __iomem annotations...

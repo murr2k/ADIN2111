@@ -39,11 +39,11 @@ struct adin2111_port {
 	struct napi_struct napi;
 	u8 port_num;
 	bool enabled;
-	
+
 	/* Statistics */
 	struct rtnl_link_stats64 stats;
 	spinlock_t stats_lock;
-	
+
 	/* MAC address */
 	u8 mac_addr[ETH_ALEN];
 };
@@ -66,42 +66,42 @@ struct adin2111_priv {
 	struct regmap *regmap;
 	struct mii_bus *mii_bus;
 	struct device *dev;
-	
+
 	/* Platform data */
 	struct adin2111_pdata pdata;
-	
+
 	/* Operation mode */
 	enum adin2111_mode mode;
 	bool cut_through_en;
 	bool switch_mode;
-	
+
 	/* Ports */
 	struct adin2111_port ports[ADIN2111_PORTS];
 	int num_ports;
-	
+
 	/* Single netdev for switch mode */
 	struct net_device *netdev;
-	
+
 	/* Work and interrupts */
 	struct work_struct irq_work;
 	struct workqueue_struct *wq;
 	int irq;
 	u32 irq_mask;
-	
+
 	/* Synchronization */
 	struct mutex lock;		/* Protects register access */
 	spinlock_t tx_lock;		/* Protects TX FIFO */
 	spinlock_t rx_lock;		/* Protects RX FIFO */
-	
+
 	/* Configuration */
 	bool crc_append;
 	bool tx_fcs_validation;
 	u32 tx_space;
 	u32 rx_size;
-	
+
 	/* GPIO */
 	struct gpio_desc *reset_gpio;
-	
+
 	/* PHY addresses */
 	u8 phy_addr[ADIN2111_PORTS];
 };

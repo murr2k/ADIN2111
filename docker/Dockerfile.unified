@@ -1,0 +1,39 @@
+# Unified Docker image for STM32MP153 + ADIN2111 testing
+FROM ubuntu:24.04
+
+# Install all required tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # ARM cross-compilation
+    gcc-arm-linux-gnueabihf \
+    g++-arm-linux-gnueabihf \
+    # Build tools
+    build-essential \
+    bc bison flex \
+    libssl-dev libelf-dev \
+    # QEMU emulation
+    qemu-system-arm \
+    qemu-user-static \
+    # Utilities
+    device-tree-compiler \
+    git wget curl \
+    file kmod \
+    # Network tools for testing
+    iproute2 \
+    iputils-ping \
+    net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set ARM environment
+ENV ARCH=arm
+ENV CROSS_COMPILE=arm-linux-gnueabihf-
+
+WORKDIR /adin2111
+
+# Copy the entire build directory with all artifacts
+COPY stm32mp153-adin2111-build/ /adin2111/
+
+# Ensure test scripts are executable
+RUN chmod +x test_native 2>/dev/null || true
+
+# Default command runs the test
+CMD ["/adin2111/test_native"]
