@@ -490,7 +490,7 @@ struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_n
 		return NULL;
 
 	SET_NETDEV_DEV(netdev, &priv->spi->dev);
-	
+
 	/* Use workqueue approach by default (recommended) */
 	netdev->netdev_ops = &adin2111_netdev_ops;
 
