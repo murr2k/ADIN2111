@@ -1,0 +1,246 @@
+root@stm32mp153a-red5vav-edge:~# modprobe adin2111_driver
+[   26.828724] adin2111 spi0.0: Device tree parsed: switch_mode=1, cut_through=0
+[   26.965105] adin2111 spi0.0: Switch mode configured: cut_through=0, crc_append=0
+[   26.971522] adin2111 spi0.0: Hardware initialized successfully
+[   27.008062] adin2111 spi0.0: PHY initialization completed
+[   27.013512] adin2111 spi0.0: Registered netdev for port 0: sw0p0
+[   27.023589] adin2111 spi0.0: Registered netdev for port 1: sw0p1
+[   27.035424] adin2111 spi0.0: IRQ 47 registered
+[   27.038528] adin2111 spi0.0: ADIN2111 driver probe completed successfully
+root@stm32mp153a-red5vav-edge:~# [   27.187653] adin2111 spi0.0: Opening port 0
+[   27.213207] adin2111 spi0.0: Opening port 1
+[   27.238107] BUG: scheduling while atomic: kworker/1:1/28/0x00000200
+[   27.243045] Modules linked in: adin2111_driver
+[   27.247536] CPU: 1 PID: 28 Comm: kworker/1:1 Not tainted 6.6.48-gce7a06b32d44-dirty #1
+[   27.255252] Hardware name: STM32 (Device Tree Support)
+[   27.260424] Workqueue: mld mld_ifc_work
+[   27.264232]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.269430]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.274424]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   27.279845]  __schedule_bug from __schedule+0x724/0x868
+[   27.285069]  __schedule from schedule+0x58/0xa8
+[   27.289559]  schedule from schedule_timeout+0x98/0x158
+[   27.294649]  schedule_timeout from __wait_for_common+0x94/0x1b4
+[   27.300546]  __wait_for_common from spi_transfer_one_message+0x534/0x768
+[   27.307253]  spi_transfer_one_message from __spi_pump_transfer_message+0x304/0x588
+[   27.314757]  __spi_pump_transfer_message from __spi_sync+0x268/0x3ac
+[   27.321047]  __spi_sync from spi_sync+0x2c/0x44
+[   27.325618]  spi_sync from spi_sync_transfer+0x8c/0xb0 [adin2111_driver]
+[   27.332246]  spi_sync_transfer [adin2111_driver] from adin2111_write_fifo+0x8c/0xe4 [adin2111_driver]
+[   27.341405]  adin2111_write_fifo [adin2111_driver] from adin2111_tx_frame+0x84/0xa0 [adin2111_driver]
+[   27.350663]  adin2111_tx_frame [adin2111_driver] from adin2111_start_xmit+0x9c/0x214 [adin2111_driver]
+[   27.359921]  adin2111_start_xmit [adin2111_driver] from dev_hard_start_xmit+0xb8/0x18c
+[   27.367753]  dev_hard_start_xmit from sch_direct_xmit+0xa4/0x33c
+[   27.373755]  sch_direct_xmit from __dev_queue_xmit+0x35c/0xb84
+[   27.379550]  __dev_queue_xmit from ip6_finish_output2+0x28c/0x8cc
+[   27.385654]  ip6_finish_output2 from mld_sendpack+0x214/0x420
+[   27.391356]  mld_sendpack from mld_ifc_work+0x1c0/0x424
+[   27.396548]  mld_ifc_work from process_one_work+0x160/0x374
+[   27.402151]  process_one_work from worker_thread+0x298/0x4f0
+[   27.407750]  worker_thread from kthread+0xe8/0x104
+[   27.412541]  kthread from ret_from_fork+0x14/0x28
+[   27.417221] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.422190] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.430391] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.438489] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   27.445446] BUG: workqueue leaked lock or atomic: kworker/1:1/0xfffffe00/28
+[   27.445446]      last function: mld_ifc_work
+[   27.445499] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   27.445515] Hardware name: STM32 (Device Tree Support)
+[   27.445524] Workqueue: mld mld_ifc_work
+[   27.445560]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.445590]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.445621]  dump_stack_lvl from process_one_work+0x370/0x374
+[   27.445659]  process_one_work from worker_thread+0x298/0x4f0
+[   27.445696]  worker_thread from kthread+0xe8/0x104
+[   27.445732]  kthread from ret_from_fork+0x14/0x28
+[   27.445758] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.445770] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.445784] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.445797] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   27.445810] BUG: scheduling while atomic: kworker/1:1/28/0xfffffe00
+[   27.445821] Modules linked in: adin2111_driver
+[   27.445835] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   27.445849] Hardware name: STM32 (Device Tree Support)
+[   27.445863] Workqueue:  0x0 (mld)
+[   27.445885]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.445912]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.445939]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   27.445968]  __schedule_bug from __schedule+0x724/0x868
+[   27.445999]  __schedule from schedule+0x58/0xa8
+[   27.446032]  schedule from worker_thread+0x208/0x4f0
+[   27.446068]  worker_thread from kthread+0xe8/0x104
+[   27.446101]  kthread from ret_from_fork+0x14/0x28
+[   27.446126] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.446138] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.446152] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.446165] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   27.638546] BUG: scheduling while atomic: kworker/1:1/28/0x00000200
+[   27.643983] Modules linked in: adin2111_driver
+[   27.648463] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   27.657693] Hardware name: STM32 (Device Tree Support)
+[   27.662866] Workqueue: mld mld_ifc_work
+[   27.666672]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.671877]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.676868]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   27.682262]  __schedule_bug from __schedule+0x724/0x868
+[   27.687453]  __schedule from schedule+0x58/0xa8
+[   27.691940]  schedule from schedule_timeout+0x98/0x158
+[   27.697129]  schedule_timeout from __wait_for_common+0x94/0x1b4
+[   27.703026]  __wait_for_common from spi_transfer_one_message+0x534/0x768
+[   27.709632]  spi_transfer_one_message from __spi_pump_transfer_message+0x304/0x588
+[   27.717237]  __spi_pump_transfer_message from __spi_sync+0x268/0x3ac
+[   27.723527]  __spi_sync from spi_sync+0x2c/0x44
+[   27.727998]  spi_sync from spi_sync_transfer+0x8c/0xb0 [adin2111_driver]
+[   27.734728]  spi_sync_transfer [adin2111_driver] from adin2111_write_fifo+0x8c/0xe4 [adin2111_driver]
+[   27.743887]  adin2111_write_fifo [adin2111_driver] from adin2111_tx_frame+0x84/0xa0 [adin2111_driver]
+[   27.753045]  adin2111_tx_frame [adin2111_driver] from adin2111_start_xmit+0x9c/0x214 [adin2111_driver]
+[   27.762304]  adin2111_start_xmit [adin2111_driver] from dev_hard_start_xmit+0xb8/0x18c
+[   27.770240]  dev_hard_start_xmit from sch_direct_xmit+0xa4/0x33c
+[   27.776244]  sch_direct_xmit from __dev_queue_xmit+0x35c/0xb84
+[   27.782039]  __dev_queue_xmit from ip6_finish_output2+0x28c/0x8cc
+[   27.788042]  ip6_finish_output2 from mld_sendpack+0x214/0x420
+[   27.793845]  mld_sendpack from mld_ifc_work+0x1c0/0x424
+[   27.799038]  mld_ifc_work from process_one_work+0x160/0x374
+[   27.804540]  process_one_work from worker_thread+0x298/0x4f0
+[   27.810140]  worker_thread from kthread+0xe8/0x104
+[   27.814930]  kthread from ret_from_fork+0x14/0x28
+[   27.819609] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.824679] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.832779] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.840977] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   27.847690] BUG: workqueue leaked lock or atomic: kworker/1:1/0xfffffe00/28
+[   27.847690]      last function: mld_ifc_work
+[   27.847737] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   27.847753] Hardware name: STM32 (Device Tree Support)
+[   27.847762] Workqueue: mld mld_ifc_work
+[   27.847797]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.847827]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.847857]  dump_stack_lvl from process_one_work+0x370/0x374
+[   27.847895]  process_one_work from worker_thread+0x298/0x4f0
+[   27.847931]  worker_thread from kthread+0xe8/0x104
+[   27.847966]  kthread from ret_from_fork+0x14/0x28
+[   27.847991] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.848004] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.848017] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.848030] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   27.848042] BUG: scheduling while atomic: kworker/1:1/28/0xfffffe00
+[   27.848053] Modules linked in: adin2111_driver
+[   27.848067] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   27.848081] Hardware name: STM32 (Device Tree Support)
+[   27.848096] Workqueue:  0x0 (mld)
+[   27.848117]  unwind_backtrace from show_stack+0x18/0x1c
+[   27.848144]  show_stack from dump_stack_lvl+0x40/0x4c
+[   27.848170]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   27.848200]  __schedule_bug from __schedule+0x724/0x868
+[   27.848231]  __schedule from schedule+0x58/0xa8
+[   27.848265]  schedule from worker_thread+0x208/0x4f0
+[   27.848301]  worker_thread from kthread+0xe8/0x104
+[   27.848334]  kthread from ret_from_fork+0x14/0x28
+[   27.848359] Exception stack(0xce885fb0 to 0xce885ff8)
+[   27.848372] 5fa0:                                     00000000 00000000 00000000 00000000
+[   27.848386] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   27.848398] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   28.038520] BUG: scheduling while atomic: kworker/1:1/28/0x00000200
+[   28.043951] Modules linked in: adin2111_driver
+[   28.048447] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   28.057781] Hardware name: STM32 (Device Tree Support)
+[   28.062855] Workqueue: ipv6_addrconf addrconf_dad_work
+[   28.067967]  unwind_backtrace from show_stack+0x18/0x1c
+[   28.073168]  show_stack from dump_stack_lvl+0x40/0x4c
+[   28.078160]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   28.083556]  __schedule_bug from __schedule+0x724/0x868
+[   28.088747]  __schedule from schedule+0x58/0xa8
+[   28.093234]  schedule from schedule_timeout+0x98/0x158
+[   28.098423]  schedule_timeout from __wait_for_common+0x94/0x1b4
+[   28.104320]  __wait_for_common from spi_transfer_one_message+0x534/0x768
+[   28.110926]  spi_transfer_one_message from __spi_pump_transfer_message+0x304/0x588
+[   28.118531]  __spi_pump_transfer_message from __spi_sync+0x268/0x3ac
+[   28.124821]  __spi_sync from spi_sync+0x2c/0x44
+[   28.129291]  spi_sync from spi_sync_transfer+0x8c/0xb0 [adin2111_driver]
+[   28.136020]  spi_sync_transfer [adin2111_driver] from adin2111_write_fifo+0x8c/0xe4 [adin2111_driver]
+[   28.145178]  adin2111_write_fifo [adin2111_driver] from adin2111_tx_frame+0x84/0xa0 [adin2111_driver]
+[   28.154336]  adin2111_tx_frame [adin2111_driver] from adin2111_start_xmit+0x9c/0x214 [adin2111_driver]
+[   28.163595]  adin2111_start_xmit [adin2111_driver] from dev_hard_start_xmit+0xb8/0x18c
+[   28.171527]  dev_hard_start_xmit from sch_direct_xmit+0xa4/0x33c
+[   28.177528]  sch_direct_xmit from __dev_queue_xmit+0x35c/0xb84
+[   28.183324]  __dev_queue_xmit from ip6_finish_output2+0x28c/0x8cc
+[   28.189426]  ip6_finish_output2 from ndisc_send_skb+0x22c/0x3d0
+[   28.195326]  ndisc_send_skb from ndisc_send_ns+0x70/0xb0
+[   28.200610]  ndisc_send_ns from addrconf_dad_work+0x3f0/0x56c
+[   28.206300]  addrconf_dad_work from process_one_work+0x160/0x374
+[   28.212302]  process_one_work from worker_thread+0x298/0x4f0
+[   28.217902]  worker_thread from kthread+0xe8/0x104
+[   28.222692]  kthread from ret_from_fork+0x14/0x28
+[   28.227372] Exception stack(0xce885fb0 to 0xce885ff8)
+[   28.232341] 5fa0:                                     00000000 00000000 00000000 00000000
+[   28.240541] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   28.248639] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   28.255339] BUG: workqueue leaked lock or atomic: kworker/1:1/0xfffffe00/28
+[   28.255339]      last function: addrconf_dad_work
+[   28.255379] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   28.255395] Hardware name: STM32 (Device Tree Support)
+[   28.255403] Workqueue: ipv6_addrconf addrconf_dad_work
+[   28.255433]  unwind_backtrace from show_stack+0x18/0x1c
+[   28.255465]  show_stack from dump_stack_lvl+0x40/0x4c
+[   28.255494]  dump_stack_lvl from process_one_work+0x370/0x374
+[   28.255533]  process_one_work from worker_thread+0x298/0x4f0
+[   28.255570]  worker_thread from kthread+0xe8/0x104
+[   28.255605]  kthread from ret_from_fork+0x14/0x28
+[   28.255630] Exception stack(0xce885fb0 to 0xce885ff8)
+[   28.255642] 5fa0:                                     00000000 00000000 00000000 00000000
+[   28.255656] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   28.255668] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   28.255681] BUG: scheduling while atomic: kworker/1:1/28/0xfffffe00
+[   28.255692] Modules linked in: adin2111_driver
+[   28.255707] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   28.255720] Hardware name: STM32 (Device Tree Support)
+[   28.255734] Workqueue:  0x0 (ipv6_addrconf)
+[   28.255757]  unwind_backtrace from show_stack+0x18/0x1c
+[   28.255784]  show_stack from dump_stack_lvl+0x40/0x4c
+[   28.255810]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   28.255839]  __schedule_bug from __schedule+0x724/0x868
+[   28.255870]  __schedule from schedule+0x58/0xa8
+[   28.255903]  schedule from worker_thread+0x208/0x4f0
+[   28.255940]  worker_thread from kthread+0xe8/0x104
+[   28.255974]  kthread from ret_from_fork+0x14/0x28
+[   28.255998] Exception stack(0xce885fb0 to 0xce885ff8)
+[   28.256010] 5fa0:                                     00000000 00000000 00000000 00000000
+[   28.256024] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   28.256037] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   28.450815] BUG: scheduling while atomic: kworker/1:1/28/0x00000200
+[   28.456591] Modules linked in: adin2111_driver
+[   28.460983] CPU: 1 PID: 28 Comm: kworker/1:1 Tainted: G        W          6.6.48-gce7a06b32d44-dirty #1
+[   28.470305] Hardware name: STM32 (Device Tree Support)
+[   28.475474] Workqueue: ipv6_addrconf addrconf_dad_work
+[   28.480586]  unwind_backtrace from show_stack+0x18/0x1c
+[   28.485787]  show_stack from dump_stack_lvl+0x40/0x4c
+[   28.490780]  dump_stack_lvl from __schedule_bug+0x58/0x6c
+[   28.496173]  __schedule_bug from __schedule+0x724/0x868
+[   28.501365]  __schedule from schedule+0x58/0xa8
+[   28.505851]  schedule from schedule_timeout+0x98/0x158
+[   28.510940]  schedule_timeout from __wait_for_common+0x94/0x1b4
+[   28.516836]  __wait_for_common from spi_transfer_one_message+0x534/0x768
+[   28.523543]  spi_transfer_one_message from __spi_pump_transfer_message+0x304/0x588
+[   28.531047]  __spi_pump_transfer_message from __spi_sync+0x268/0x3ac
+[   28.537437]  __spi_sync from spi_sync+0x2c/0x44
+[   28.541907]  spi_sync from spi_sync_transfer+0x8c/0xb0 [adin2111_driver]
+[   28.548634]  spi_sync_transfer [adin2111_driver] from adin2111_write_fifo+0x8c/0xe4 [adin2111_driver]
+[   28.557792]  adin2111_write_fifo [adin2111_driver] from adin2111_tx_frame+0x84/0xa0 [adin2111_driver]
+[   28.566949]  adin2111_tx_frame [adin2111_driver] from adin2111_start_xmit+0x9c/0x214 [adin2111_driver]
+[   28.576208]  adin2111_start_xmit [adin2111_driver] from dev_hard_start_xmit+0xb8/0x18c
+[   28.584141]  dev_hard_start_xmit from sch_direct_xmit+0xa4/0x33c
+[   28.590143]  sch_direct_xmit from __dev_queue_xmit+0x35c/0xb84
+[   28.595938]  __dev_queue_xmit from ip6_finish_output2+0x28c/0x8cc
+[   28.602041]  ip6_finish_output2 from ndisc_send_skb+0x22c/0x3d0
+[   28.607841]  ndisc_send_skb from ndisc_send_ns+0x70/0xb0
+[   28.613126]  ndisc_send_ns from addrconf_dad_work+0x3f0/0x56c
+[   28.618915]  addrconf_dad_work from process_one_work+0x160/0x374
+[   28.624918]  process_one_work from worker_thread+0x298/0x4f0
+[   28.630517]  worker_thread from kthread+0xe8/0x104
+[   28.635308]  kthread from ret_from_fork+0x14/0x28
+[   28.639987] Exception stack(0xce885fb0 to 0xce885ff8)
+[   28.644956] 5fa0:                                     00000000 00000000 00000000 00000000
+[   28.653157] 5fc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   28.661255] 5fe0: 00000000 00000000 00000000 00000000 00000013 00000000
+

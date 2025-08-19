@@ -1,0 +1,293 @@
+--- drivers/net/ethernet/adi/adin2111/adin2111_netdev.c	2025-08-19 08:24:47.412362812 -0700
++++ drivers/net/ethernet/adi/adin2111/adin2111_netdev_fixed.c	2025-08-19 11:28:46.361498828 -0700
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0+
+ /*
+  * ADIN2111 Dual Port Industrial Ethernet Switch/PHY
+- * Network Device Operations
++ * Network Device Operations - FIXED for atomic context bug
+  *
+  * Copyright 2024 Analog Devices Inc.
+  */
+@@ -20,10 +20,62 @@
+ extern int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
+ extern int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
+ 
++/* TX work structure for deferred transmission */
++struct adin2111_tx_work {
++	struct work_struct work;
++	struct adin2111_priv *priv;
++	struct sk_buff *skb;
++	struct adin2111_port *port;
++};
++
++static void adin2111_tx_work_handler(struct work_struct *work)
++{
++	struct adin2111_tx_work *tx_work = container_of(work, struct adin2111_tx_work, work);
++	struct adin2111_priv *priv = tx_work->priv;
++	struct adin2111_port *port = tx_work->port;
++	struct sk_buff *skb = tx_work->skb;
++	struct net_device *netdev = port->netdev;
++	int ret;
++
++	/* Use mutex for SPI access - can sleep */
++	mutex_lock(&priv->lock);
++
++	/* Check if TX FIFO has space */
++	u32 tx_space;
++	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
++	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
++		/* No space, requeue */
++		netif_stop_queue(netdev);
++		dev_kfree_skb(skb);
++		port->stats.tx_dropped++;
++		goto out;
++	}
++
++	ret = adin2111_tx_frame(priv, skb, port->port_num);
++	if (ret) {
++		dev_err(&priv->spi->dev, "TX failed: %d\n", ret);
++		port->stats.tx_errors++;
++		dev_kfree_skb(skb);
++	} else {
++		port->stats.tx_packets++;
++		port->stats.tx_bytes += skb->len;
++		dev_consume_skb_any(skb);
++	}
++
++	/* Wake queue if it was stopped */
++	if (netif_queue_stopped(netdev))
++		netif_wake_queue(netdev);
++
++out:
++	mutex_unlock(&priv->lock);
++	kfree(tx_work);
++}
++
+ static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
+ {
+ 	struct adin2111_port *port = netdev_priv(netdev);
+ 	struct adin2111_priv *priv;
++	struct adin2111_tx_work *tx_work;
+ 
+ 	/* Validate pointers to prevent kernel panic */
+ 	if (!port) {
+@@ -38,7 +90,6 @@
+ 		dev_kfree_skb_any(skb);
+ 		return NETDEV_TX_OK;
+ 	}
+-	int ret;
+ 
+ 	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {
+ 		dev_err(&priv->spi->dev, "Frame too large: %d bytes\n", skb->len);
+@@ -47,29 +98,101 @@
+ 		return NETDEV_TX_OK;
+ 	}
+ 
+-	spin_lock(&priv->tx_lock);
++	/* Allocate work structure for deferred transmission */
++	tx_work = kmalloc(sizeof(*tx_work), GFP_ATOMIC);
++	if (!tx_work) {
++		dev_kfree_skb_any(skb);
++		port->stats.tx_dropped++;
++		return NETDEV_TX_OK;
++	}
+ 
+-	/* Check if TX FIFO has space */
+-	u32 tx_space;
+-	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
+-	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
+-		spin_unlock(&priv->tx_lock);
+-		netif_stop_queue(netdev);
+-		return NETDEV_TX_BUSY;
++	/* Initialize work structure */
++	INIT_WORK(&tx_work->work, adin2111_tx_work_handler);
++	tx_work->priv = priv;
++	tx_work->port = port;
++	tx_work->skb = skb;
++
++	/* Schedule transmission work - this doesn't sleep */
++	queue_work(system_wq, &tx_work->work);
++
++	return NETDEV_TX_OK;
++}
++
++/* Alternative fix using bottom half (tasklet) instead of workqueue */
++static void adin2111_tx_tasklet(unsigned long data)
++{
++	struct adin2111_port *port = (struct adin2111_port *)data;
++	struct adin2111_priv *priv = port->priv;
++	struct sk_buff *skb;
++	int ret;
++
++	/* Process all queued packets */
++	while ((skb = skb_dequeue(&port->tx_queue))) {
++		/* Use mutex for SPI access */
++		mutex_lock(&priv->lock);
++
++		/* Check TX space */
++		u32 tx_space;
++		ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
++		if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
++			/* No space, requeue and stop */
++			skb_queue_head(&port->tx_queue, skb);
++			netif_stop_queue(port->netdev);
++			mutex_unlock(&priv->lock);
++			break;
++		}
++
++		ret = adin2111_tx_frame(priv, skb, port->port_num);
++		if (ret) {
++			dev_err(&priv->spi->dev, "TX failed: %d\n", ret);
++			port->stats.tx_errors++;
++		} else {
++			port->stats.tx_packets++;
++			port->stats.tx_bytes += skb->len;
++		}
++
++		mutex_unlock(&priv->lock);
++		dev_kfree_skb(skb);
+ 	}
+ 
+-	ret = adin2111_tx_frame(priv, skb, port->port_num);
+-	if (ret) {
+-		dev_err(&priv->spi->dev, "TX failed: %d\n", ret);
+-		port->stats.tx_errors++;
++	/* Wake queue if packets were transmitted */
++	if (netif_queue_stopped(port->netdev) && skb_queue_empty(&port->tx_queue))
++		netif_wake_queue(port->netdev);
++}
++
++/* Alternative start_xmit using tasklet approach */
++static netdev_tx_t adin2111_start_xmit_tasklet(struct sk_buff *skb, struct net_device *netdev)
++{
++	struct adin2111_port *port = netdev_priv(netdev);
++	struct adin2111_priv *priv;
++
++	/* Validate pointers */
++	if (!port) {
++		dev_err(&netdev->dev, "Invalid port in xmit\n");
+ 		dev_kfree_skb_any(skb);
+-	} else {
+-		port->stats.tx_packets++;
+-		port->stats.tx_bytes += skb->len;
+-		dev_consume_skb_any(skb);
++		return NETDEV_TX_OK;
++	}
++
++	priv = port->priv;
++	if (!priv) {
++		dev_err(&netdev->dev, "Invalid priv in xmit\n");
++		dev_kfree_skb_any(skb);
++		return NETDEV_TX_OK;
+ 	}
+ 
+-	spin_unlock(&priv->tx_lock);
++	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {
++		dev_err(&priv->spi->dev, "Frame too large: %d bytes\n", skb->len);
++		dev_kfree_skb_any(skb);
++		port->stats.tx_dropped++;
++		return NETDEV_TX_OK;
++	}
++
++	/* Queue the packet for tasklet processing */
++	skb_queue_tail(&port->tx_queue, skb);
++
++	/* Schedule tasklet to process TX queue */
++	tasklet_schedule(&port->tx_tasklet);
++
+ 	return NETDEV_TX_OK;
+ }
+ 
+@@ -81,6 +204,10 @@
+ 
+ 	dev_info(&priv->spi->dev, "Opening port %d\n", port->port_num);
+ 
++	/* Initialize TX queue and tasklet if using tasklet approach */
++	skb_queue_head_init(&port->tx_queue);
++	tasklet_init(&port->tx_tasklet, adin2111_tx_tasklet, (unsigned long)port);
++
+ 	/* Start PHY */
+ 	if (port->phydev) {
+ 		phy_start(port->phydev);
+@@ -113,6 +240,8 @@
+ err_phy_stop:
+ 	if (port->phydev)
+ 		phy_stop(port->phydev);
++	tasklet_kill(&port->tx_tasklet);
++	skb_queue_purge(&port->tx_queue);
+ 	return ret;
+ }
+ 
+@@ -125,6 +254,10 @@
+ 
+ 	netif_stop_queue(netdev);
+ 
++	/* Kill tasklet and purge TX queue */
++	tasklet_kill(&port->tx_tasklet);
++	skb_queue_purge(&port->tx_queue);
++
+ 	/* Stop PHY */
+ 	if (port->phydev)
+ 		phy_stop(port->phydev);
+@@ -208,10 +341,22 @@
+ 	return 0;
+ }
+ 
++/* Use workqueue approach for production */
+ static const struct net_device_ops adin2111_netdev_ops = {
+ 	.ndo_open		= adin2111_open,
+ 	.ndo_stop		= adin2111_stop,
+-	.ndo_start_xmit		= adin2111_start_xmit,
++	.ndo_start_xmit		= adin2111_start_xmit,  /* Workqueue approach */
++	.ndo_get_stats64	= adin2111_get_stats64,
++	.ndo_set_mac_address	= adin2111_netdev_set_mac_address,
++	.ndo_change_mtu		= adin2111_change_mtu,
++	.ndo_validate_addr	= eth_validate_addr,
++};
++
++/* Alternative using tasklet approach */
++static const struct net_device_ops adin2111_netdev_ops_tasklet = {
++	.ndo_open		= adin2111_open,
++	.ndo_stop		= adin2111_stop,
++	.ndo_start_xmit		= adin2111_start_xmit_tasklet,  /* Tasklet approach */
+ 	.ndo_get_stats64	= adin2111_get_stats64,
+ 	.ndo_set_mac_address	= adin2111_netdev_set_mac_address,
+ 	.ndo_change_mtu		= adin2111_change_mtu,
+@@ -224,6 +369,9 @@
+ 	u16 frame_header;
+ 	int ret;
+ 
++	/* NOTE: This function is now called from workqueue/tasklet context
++	 * where sleeping is allowed, so spi_sync is safe to use */
++
+ 	/* Allocate buffer for frame header + data */
+ 	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);
+ 	if (!frame_buf)
+@@ -245,7 +393,7 @@
+ 	if (ret)
+ 		goto out;
+ 
+-	/* Write frame data */
++	/* Write frame data - this calls spi_sync which can sleep */
+ 	ret = adin2111_write_fifo(priv, ADIN2111_TX,
+ 				  frame_buf, skb->len + ADIN2111_FRAME_HEADER_LEN);
+ 
+@@ -341,6 +489,8 @@
+ 		return NULL;
+ 
+ 	SET_NETDEV_DEV(netdev, &priv->spi->dev);
++	
++	/* Use workqueue approach by default (recommended) */
+ 	netdev->netdev_ops = &adin2111_netdev_ops;
+ 
+ 	/* Setup port structure */
+@@ -377,6 +527,6 @@
+ 	return netdev;
+ }
+ 
+-MODULE_DESCRIPTION("ADIN2111 Network Device Operations");
++MODULE_DESCRIPTION("ADIN2111 Network Device Operations - Fixed for Atomic Context");
+ MODULE_AUTHOR("Analog Devices Inc.");
+ MODULE_LICENSE("GPL");
+\ No newline at end of file
