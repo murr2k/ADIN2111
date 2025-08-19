@@ -37,7 +37,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
+      image-tag: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
     
     steps:
       - name: Checkout
