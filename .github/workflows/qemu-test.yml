@@ -223,6 +223,12 @@ jobs:
       - name: Create Test Initramfs
         shell: bash
         run: |
+          # Ensure cpio is installed (fallback if container doesn't have it)
+          if ! command -v cpio > /dev/null 2>&1; then
+            echo "cpio not found, installing..."
+            apt-get update && apt-get install -y cpio gzip || true
+          fi
+          
           # Create minimal initramfs with test scripts
           INITRAMFS_CACHE="$HOME/initramfs-cache"
           mkdir -p "$INITRAMFS_CACHE"
