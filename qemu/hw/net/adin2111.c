@@ -358,6 +358,28 @@ static void adin2111_realize(SSISlave *dev, Error **errp)
     sysbus_init_irq(SYS_BUS_DEVICE(dev), &s->irq);
 }
 
+/* Device unrealization - cleanup resources */
+static void adin2111_unrealize(SSISlave *dev)
+{
+    ADIN2111State *s = ADIN2111(dev);
+    int i;
+    
+    /* Cancel and free timer to prevent memory leak */
+    if (s->reset_timer) {
+        timer_del(s->reset_timer);
+        timer_free(s->reset_timer);
+        s->reset_timer = NULL;
+    }
+    
+    /* Clean up NICs */
+    for (i = 0; i < 2; i++) {
+        if (s->nic[i]) {
+            qemu_del_nic(s->nic[i]);
+            s->nic[i] = NULL;
+        }
+    }
+}
+
 /* Property definitions */
 static Property adin2111_properties[] = {
     DEFINE_NIC_PROPERTIES(ADIN2111State, conf[0]),
@@ -371,6 +393,7 @@ static void adin2111_class_init(ObjectClass *klass, void *data)
     SSISlaveClass *ssc = SSI_SLAVE_CLASS(klass);
     
     ssc->realize = adin2111_realize;
+    ssc->unrealize = adin2111_unrealize;
     ssc->transfer = adin2111_transfer;
     dc->reset = adin2111_reset;
     device_class_set_props(dc, adin2111_properties);
