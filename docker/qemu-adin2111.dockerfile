@@ -98,7 +98,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libelf-dev \
     libssl-dev \
     gcc-arm-linux-gnueabihf \
+    gcc-aarch64-linux-gnu \
     ccache \
+    wget \
+    ca-certificates \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy QEMU binaries from builder
