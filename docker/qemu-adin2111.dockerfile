@@ -9,8 +9,8 @@ ARG JOBS=4
 ARG BUILDKIT_INLINE_CACHE=1
 
 # Install build dependencies - separate layer for better caching
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
+# Fix apt cache issues in GitHub Actions
+RUN mkdir -p /var/cache/apt/archives/partial /var/lib/apt/lists/partial && \
     apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -45,10 +45,9 @@ COPY qemu/include/hw/net/adin2111.h /qemu/include/hw/net/
 RUN echo "softmmu_ss.add(when: 'CONFIG_ADIN2111', if_true: files('adin2111.c'))" \
     >> /qemu/hw/net/meson.build
 
-# Configure and build QEMU with ccache
+# Configure and build QEMU
 WORKDIR /qemu
-RUN --mount=type=cache,target=/ccache \
-    ./configure \
+RUN ./configure \
     --target-list=arm-softmmu,aarch64-softmmu \
     --enable-kvm \
     --enable-virtfs \
@@ -63,8 +62,7 @@ RUN --mount=type=cache,target=/ccache \
     --prefix=/usr/local \
     --enable-debug-info
 
-RUN --mount=type=cache,target=/ccache \
-    make -j${JOBS}
+RUN make -j${JOBS}
     
 RUN make install DESTDIR=/qemu-install
 
@@ -72,9 +70,7 @@ RUN make install DESTDIR=/qemu-install
 FROM ubuntu:24.04
 
 # Install runtime dependencies - optimized layer ordering
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libpixman-1-0 \
     libcap-ng0 \
@@ -84,9 +80,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && rm -rf /var/lib/apt/lists/*
 
 # Install test utilities in separate layer (changes less frequently)
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     iproute2 \
     iputils-ping \
     iperf3 \
@@ -96,9 +90,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     && rm -rf /var/lib/apt/lists/*
 
 # Install kernel build deps in separate layer
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     bc \
     bison \
