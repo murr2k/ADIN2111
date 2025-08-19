@@ -124,6 +124,7 @@ jobs:
             build-tools-${{ runner.os }}-
       
       - name: Setup Kernel Build
+        shell: bash
         run: |
           echo "Setting up kernel ${{ matrix.kernel }} for ${{ matrix.arch }}"
           
@@ -221,6 +222,7 @@ jobs:
             initramfs-${{ runner.os }}-
       
       - name: Create Test Initramfs
+        shell: bash
         run: |
           # Create minimal initramfs with test scripts
           INITRAMFS_CACHE="$HOME/initramfs-cache"
@@ -284,6 +286,7 @@ jobs:
       
       - name: Run QEMU Tests
         timeout-minutes: 10
+        shell: bash
         run: |
           QEMU_CMD=""
           if [ "${{ matrix.arch }}" = "arm" ]; then
@@ -314,6 +317,7 @@ jobs:
       
       - name: Parse Test Results
         if: always()
+        shell: bash
         run: |
           # Extract test results from QEMU output
           grep -E "(PASS|FAIL|SKIP):" qemu-output.log > test-results.txt || true
@@ -362,6 +366,7 @@ jobs:
           merge-multiple: true
       
       - name: Analyze Performance
+        shell: bash
         run: |
           echo "## Performance Analysis" > performance.md
           
@@ -376,6 +381,7 @@ jobs:
       
       - name: Update Performance Dashboard
         if: github.ref == 'refs/heads/main'
+        shell: bash
         run: |
           # Store performance metrics for trend analysis
           mkdir -p .metrics
@@ -392,6 +398,7 @@ jobs:
     
     steps:
       - name: Create Summary
+        shell: bash
         run: |
           echo "# QEMU Testing Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
