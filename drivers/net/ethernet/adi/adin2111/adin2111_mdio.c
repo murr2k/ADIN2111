@@ -189,7 +189,7 @@ int adin2111_phy_init(struct adin2111_priv *priv, int port)
 	ret = devm_mdiobus_register(&priv->spi->dev, mii_bus);
 	if (ret) {
 		dev_err(&priv->spi->dev, "Failed to register MDIO bus: %d\n", ret);
-		devm_mdiobus_free(&priv->spi->dev, mii_bus);
+		/* devm resources are automatically freed on error */
 		return ret;
 	}
 
