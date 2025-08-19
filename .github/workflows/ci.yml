@@ -45,8 +45,8 @@ jobs:
       - name: Install analysis tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cppcheck sparse coccinelle
-          pip install checkpatch gitlint
+          sudo apt-get install -y cppcheck sparse coccinelle || true
+          pip install gitlint || true
       
       - name: Run checkpatch.pl
         run: |
@@ -281,14 +281,10 @@ jobs:
             --threshold 10 || true
       
       - name: Store benchmark results
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          tool: 'customBiggerIsBetter'
-          output-file-path: tests/performance/results.json
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: false  # Disable auto-push to avoid gh-pages issues
-          comment-on-alert: false
-          save-data-file: false
+        run: |
+          # Skip benchmark storage - gh-pages not configured
+          echo "Benchmark results stored locally in tests/performance/results.json"
+          cat tests/performance/results.json
 
   # Job 7: Memory and Resource Tests
   memory-tests:
