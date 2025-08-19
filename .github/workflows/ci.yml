@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 10  # Overall job timeout
     strategy:
       matrix:
-        kernel: ['6.1', '6.6', '6.8']
+        kernel: ['6.6', '6.8']  # Removed 6.1 as client uses 6.6.48
         arch: ['arm', 'arm64', 'x86_64']
       fail-fast: false  # Continue other builds even if one fails
     steps:
@@ -132,7 +132,9 @@ jobs:
           echo "CONFIG_MODULES=y" >> .config
           echo "CONFIG_NET=y" >> .config
           echo "CONFIG_ETHERNET=y" >> .config
-          echo "CONFIG_ADIN2111=m" >> .config
+          echo "CONFIG_SPI=y" >> .config
+          echo "CONFIG_PHYLIB=y" >> .config
+          echo "CONFIG_REGMAP_SPI=y" >> .config
       
       - name: Build ADIN2111 module
         timeout-minutes: 5
@@ -147,16 +149,25 @@ jobs:
           make modules_prepare -j$(nproc)
           # Copy our driver source to kernel tree
           mkdir -p drivers/net/ethernet/adi
-          cp -r ../drivers/net/ethernet/adi/adin2111/* drivers/net/ethernet/adi/
-          # Build the module with parallel jobs
-          make M=drivers/net/ethernet/adi modules -j$(nproc) || true
+          cp ../drivers/net/ethernet/adi/Makefile drivers/net/ethernet/adi/
+          cp ../drivers/net/ethernet/adi/Kconfig drivers/net/ethernet/adi/
+          cp -r ../drivers/net/ethernet/adi/adin2111 drivers/net/ethernet/adi/
+          # Use the existing Makefile which builds adin2111_driver.ko
+          # Build the module - MUST SUCCEED or fail the job
+          make M=drivers/net/ethernet/adi/adin2111 modules -j$(nproc)
+          # Verify the module was built
+          if [ ! -f "drivers/net/ethernet/adi/adin2111/adin2111_driver.ko" ]; then
+            echo "ERROR: Module build failed - adin2111_driver.ko not found!"
+            exit 1
+          fi
       
       - name: Check module info
         run: |
-          if [ "${{ matrix.arch }}" = "x86_64" ]; then
-            # Check if module was built
-            if [ -f "linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111.ko" ]; then
-              modinfo linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111.ko || true
+          # Check if module was built for all architectures
+          if [ -f "linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111/adin2111_driver.ko" ]; then
+            echo "Module successfully built for ${{ matrix.arch }} on kernel ${{ matrix.kernel }}"
+            if [ "${{ matrix.arch }}" = "x86_64" ]; then
+              modinfo linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111/adin2111_driver.ko || true
             else
               echo "Module build skipped or failed - checking for .o files"
               ls -la linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/ 2>/dev/null || echo "Build artifacts not found"
