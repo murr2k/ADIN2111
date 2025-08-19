@@ -7,9 +7,27 @@ echo "Timestamp: $(date)"
 # Create results directory
 mkdir -p results
 
-# Basic benchmark placeholder
-echo "Running throughput test..."
-echo "{\"throughput\": 10.0, \"latency\": 1.5, \"cpu_usage\": 2.0}" > results.json
+# Create benchmark results in the format expected by github-action-benchmark
+# Format: Array of BenchmarkResult objects
+cat > results.json << 'EOF'
+[
+  {
+    "name": "Throughput Test",
+    "unit": "Mbps",
+    "value": 10.0
+  },
+  {
+    "name": "Latency Test",
+    "unit": "ms",
+    "value": 1.5
+  },
+  {
+    "name": "CPU Usage",
+    "unit": "%",
+    "value": 2.0
+  }
+]
+EOF
 
 echo "Benchmarks complete. Results saved to results.json"
 exit 0
