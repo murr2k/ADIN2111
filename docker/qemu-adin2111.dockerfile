@@ -6,9 +6,12 @@ FROM ubuntu:24.04 AS qemu-builder
 # Build arguments
 ARG QEMU_VERSION=v9.1.0
 ARG JOBS=4
+ARG BUILDKIT_INLINE_CACHE=1
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
+# Install build dependencies - separate layer for better caching
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
     ninja-build \
@@ -22,7 +25,13 @@ RUN apt-get update && apt-get install -y \
     libattr1-dev \
     libfdt-dev \
     zlib1g-dev \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
+
+# Setup ccache
+ENV PATH="/usr/lib/ccache:${PATH}"
+ENV CCACHE_DIR=/ccache
+ENV CCACHE_MAXSIZE=1G
 
 # Clone QEMU source
 RUN git clone --depth 1 --branch ${QEMU_VERSION} \
@@ -36,9 +45,10 @@ COPY qemu/include/hw/net/adin2111.h /qemu/include/hw/net/
 RUN echo "softmmu_ss.add(when: 'CONFIG_ADIN2111', if_true: files('adin2111.c'))" \
     >> /qemu/hw/net/meson.build
 
-# Configure and build QEMU
+# Configure and build QEMU with ccache
 WORKDIR /qemu
-RUN ./configure \
+RUN --mount=type=cache,target=/ccache \
+    ./configure \
     --target-list=arm-softmmu,aarch64-softmmu \
     --enable-kvm \
     --enable-virtfs \
@@ -50,30 +60,45 @@ RUN ./configure \
     --disable-xen \
     --disable-brlapi \
     --disable-libusb \
-    --prefix=/usr/local
+    --prefix=/usr/local \
+    --enable-debug-info
 
-RUN make -j${JOBS}
+RUN --mount=type=cache,target=/ccache \
+    make -j${JOBS}
+    
 RUN make install DESTDIR=/qemu-install
 
 # Runtime stage
 FROM ubuntu:24.04
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+# Install runtime dependencies - optimized layer ordering
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libpixman-1-0 \
     libcap-ng0 \
     libattr1 \
     libfdt1 \
     zlib1g \
-    # Test utilities
+    && rm -rf /var/lib/apt/lists/*
+
+# Install test utilities in separate layer (changes less frequently)
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     iproute2 \
     iputils-ping \
     iperf3 \
     ethtool \
     tcpdump \
     strace \
-    # Kernel build deps
+    && rm -rf /var/lib/apt/lists/*
+
+# Install kernel build deps in separate layer
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     bc \
     bison \
@@ -81,6 +106,7 @@ RUN apt-get update && apt-get install -y \
     libelf-dev \
     libssl-dev \
     gcc-arm-linux-gnueabihf \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy QEMU binaries from builder

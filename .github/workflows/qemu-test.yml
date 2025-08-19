@@ -72,10 +72,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           build-args: |
             JOBS=4
+            BUILDKIT_INLINE_CACHE=1
 
   test-driver-qemu:
     name: Test Driver in QEMU
@@ -96,34 +101,84 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+      - name: Cache Kernel Build
+        id: kernel-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/kernel-cache/linux-${{ matrix.kernel }}
+            ~/kernel-cache/linux-${{ matrix.kernel }}.tar.xz
+          key: kernel-${{ matrix.kernel }}-${{ matrix.arch }}-${{ hashFiles('drivers/**/*.c', 'drivers/**/*.h') }}
+          restore-keys: |
+            kernel-${{ matrix.kernel }}-${{ matrix.arch }}-
+            kernel-${{ matrix.kernel }}-
+      
+      - name: Cache Build Tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/tools-cache
+          key: build-tools-${{ runner.os }}-${{ hashFiles('docker/**') }}
+          restore-keys: |
+            build-tools-${{ runner.os }}-
+      
       - name: Setup Kernel Build
         run: |
           echo "Setting up kernel ${{ matrix.kernel }} for ${{ matrix.arch }}"
           
-          # Kernel version checksums (update these for new kernel versions)
-          declare -A KERNEL_SHA256
-          KERNEL_SHA256["6.1"]="2ca1f17051a430f6fed1196e4952717507171acfd97d96577212502703b25deb"
-          KERNEL_SHA256["6.6"]="d926a06c63dd8ac7df3f86ee1ffc2ce2a3b81a2d168484e76b5b389aba8e56d0"
-          KERNEL_SHA256["6.8"]="c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3"
-          
-          # Download kernel source with checksum verification
-          KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz"
-          wget -q "$KERNEL_URL" -O linux-${{ matrix.kernel }}.tar.xz
-          
-          # Verify checksum
-          EXPECTED_SHA="${KERNEL_SHA256[${{ matrix.kernel }}]}"
-          if [ -n "$EXPECTED_SHA" ]; then
-            echo "$EXPECTED_SHA  linux-${{ matrix.kernel }}.tar.xz" | sha256sum -c - || {
-              echo "ERROR: Kernel checksum verification failed for version ${{ matrix.kernel }}!"
-              echo "This could indicate a compromised download."
-              exit 1
-            }
-          else
-            echo "WARNING: No checksum available for kernel ${{ matrix.kernel }}, proceeding without verification"
+          # Use ccache if available
+          if command -v ccache > /dev/null 2>&1; then
+            export CC="ccache gcc"
+            export CXX="ccache g++"
+            ccache -s
           fi
           
-          tar xf linux-${{ matrix.kernel }}.tar.xz
-          cd linux-${{ matrix.kernel }}
+          # Check if kernel is cached
+          KERNEL_CACHE_DIR="$HOME/kernel-cache"
+          mkdir -p "$KERNEL_CACHE_DIR"
+          
+          if [ -d "$KERNEL_CACHE_DIR/linux-${{ matrix.kernel }}" ] && [ "${{ steps.kernel-cache.outputs.cache-hit }}" == "true" ]; then
+            echo "Using cached kernel build"
+            cp -r "$KERNEL_CACHE_DIR/linux-${{ matrix.kernel }}" .
+            cd linux-${{ matrix.kernel }}
+          else
+            echo "Building kernel from source"
+            
+            # Kernel version checksums (update these for new kernel versions)
+            declare -A KERNEL_SHA256
+            KERNEL_SHA256["6.1"]="2ca1f17051a430f6fed1196e4952717507171acfd97d96577212502703b25deb"
+            KERNEL_SHA256["6.6"]="d926a06c63dd8ac7df3f86ee1ffc2ce2a3b81a2d168484e76b5b389aba8e56d0"
+            KERNEL_SHA256["6.8"]="c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3"
+            
+            # Check if tarball is cached
+            if [ -f "$KERNEL_CACHE_DIR/linux-${{ matrix.kernel }}.tar.xz" ]; then
+              echo "Using cached kernel tarball"
+              cp "$KERNEL_CACHE_DIR/linux-${{ matrix.kernel }}.tar.xz" .
+            else
+              # Download kernel source with checksum verification
+              KERNEL_URL="https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz"
+              wget -q "$KERNEL_URL" -O linux-${{ matrix.kernel }}.tar.xz
+              
+              # Verify checksum
+              EXPECTED_SHA="${KERNEL_SHA256[${{ matrix.kernel }}]}"
+              if [ -n "$EXPECTED_SHA" ]; then
+                echo "$EXPECTED_SHA  linux-${{ matrix.kernel }}.tar.xz" | sha256sum -c - || {
+                  echo "ERROR: Kernel checksum verification failed for version ${{ matrix.kernel }}!"
+                  echo "This could indicate a compromised download."
+                  exit 1
+                }
+              else
+                echo "WARNING: No checksum available for kernel ${{ matrix.kernel }}, proceeding without verification"
+              fi
+              
+              # Cache the tarball
+              cp linux-${{ matrix.kernel }}.tar.xz "$KERNEL_CACHE_DIR/"
+            fi
+            
+            tar xf linux-${{ matrix.kernel }}.tar.xz
+            cd linux-${{ matrix.kernel }}
+          fi
           
           # Configure kernel with ADIN2111 driver
           if [ "${{ matrix.arch }}" = "arm" ]; then
@@ -146,24 +201,52 @@ jobs:
           # Copy our driver
           cp -r $GITHUB_WORKSPACE/drivers/net/ethernet/adi drivers/net/ethernet/
           
-          # Build kernel
+          # Build kernel with parallel jobs
           make -j$(nproc) Image modules
+          
+          # Cache the built kernel
+          if [ "${{ steps.kernel-cache.outputs.cache-hit }}" != "true" ]; then
+            echo "Caching built kernel..."
+            cp -r . "$KERNEL_CACHE_DIR/linux-${{ matrix.kernel }}"
+          fi
+      
+      - name: Cache Initramfs Components
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/initramfs-cache/busybox
+            ~/initramfs-cache/initramfs-base.cpio.gz
+          key: initramfs-${{ runner.os }}-${{ hashFiles('tests/qemu/**/*.sh') }}
+          restore-keys: |
+            initramfs-${{ runner.os }}-
       
       - name: Create Test Initramfs
         run: |
           # Create minimal initramfs with test scripts
+          INITRAMFS_CACHE="$HOME/initramfs-cache"
+          mkdir -p "$INITRAMFS_CACHE"
           mkdir -p initramfs/{bin,sbin,etc,proc,sys,dev,tests}
           
-          # Download busybox with SHA256 verification
-          BUSYBOX_URL="https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox"
-          BUSYBOX_SHA256="6e123e7f3202b28b9b1ae1d12a9ca65a888ec8dc60e23bc8419e7fa0289bd54e"
+          # Check for cached busybox
+          if [ -f "$INITRAMFS_CACHE/busybox" ]; then
+            echo "Using cached busybox"
+            cp "$INITRAMFS_CACHE/busybox" busybox
+          else
+            # Download busybox with SHA256 verification
+            BUSYBOX_URL="https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox"
+            BUSYBOX_SHA256="6e123e7f3202b28b9b1ae1d12a9ca65a888ec8dc60e23bc8419e7fa0289bd54e"
+            
+            wget -q "$BUSYBOX_URL" -O busybox
+            echo "$BUSYBOX_SHA256  busybox" | sha256sum -c - || {
+              echo "ERROR: Busybox checksum verification failed!"
+              echo "This could indicate a compromised download or supply chain attack."
+              exit 1
+            }
+            
+            # Cache busybox
+            cp busybox "$INITRAMFS_CACHE/"
+          fi
           
-          wget -q "$BUSYBOX_URL" -O busybox
-          echo "$BUSYBOX_SHA256  busybox" | sha256sum -c - || {
-            echo "ERROR: Busybox checksum verification failed!"
-            echo "This could indicate a compromised download or supply chain attack."
-            exit 1
-          }
           chmod +x busybox
           cp busybox initramfs/bin/
           
