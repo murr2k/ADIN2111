@@ -370,7 +370,8 @@ int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port)
 	int ret;
 
 	/* NOTE: This function is now called from workqueue/tasklet context
-	 * where sleeping is allowed, so spi_sync is safe to use */
+	 * where sleeping is allowed, so spi_sync is safe to use
+	 */
 
 	/* Allocate buffer for frame header + data */
 	frame_buf = kmalloc(skb->len + ADIN2111_FRAME_HEADER_LEN, GFP_KERNEL);

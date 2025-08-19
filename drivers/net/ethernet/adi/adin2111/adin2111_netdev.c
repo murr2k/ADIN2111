@@ -16,9 +16,7 @@
 #include "adin2111.h"
 #include "adin2111_regs.h"
 
-/* External function declarations */
-extern int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
-extern int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
+/* Functions defined in adin2111_spi.c - declarations should be in header */
 
 static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *netdev)
 {
@@ -38,6 +36,7 @@ static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *n
 		dev_kfree_skb_any(skb);
 		return NETDEV_TX_OK;
 	}
+
 	int ret;
 
 	if (skb->len > ADIN2111_MAX_FRAME_SIZE) {
@@ -51,6 +50,7 @@ static netdev_tx_t adin2111_start_xmit(struct sk_buff *skb, struct net_device *n
 
 	/* Check if TX FIFO has space */
 	u32 tx_space;
+
 	ret = adin2111_read_reg(priv, ADIN2111_TX_SPACE, &tx_space);
 	if (ret || tx_space < (skb->len + ADIN2111_FRAME_HEADER_LEN)) {
 		spin_unlock(&priv->tx_lock);
@@ -89,6 +89,7 @@ static int adin2111_open(struct net_device *netdev)
 	/* Enable port in switch configuration */
 	if (priv->switch_mode) {
 		u32 port_func_reg;
+
 		ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
 		if (ret)
 			goto err_phy_stop;
@@ -132,7 +133,9 @@ static int adin2111_stop(struct net_device *netdev)
 	/* Disable port in switch configuration */
 	if (priv->switch_mode) {
 		u32 port_func_reg;
-		int ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
+		int ret;
+
+		ret = adin2111_read_reg(priv, ADIN2111_PORT_FUNCT, &port_func_reg);
 		if (!ret) {
 			if (port->port_num == 0) {
 				port_func_reg |= ADIN2111_PORT_FUNCT_BC_DIS_P1 |

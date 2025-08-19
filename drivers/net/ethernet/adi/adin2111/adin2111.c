@@ -448,7 +448,7 @@ err_cleanup_phy:
 }
 
 /* Remove function - signature changed in kernel 6.0+ */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 static void adin2111_remove(struct spi_device *spi)
 #else
 static int adin2111_remove(struct spi_device *spi)
@@ -459,7 +459,7 @@ static int adin2111_remove(struct spi_device *spi)
 	/* Validate priv to prevent kernel panic */
 	if (!priv) {
 		dev_err(&spi->dev, "No private data in remove\n");
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 		return 0;
 #else
 		return;
@@ -492,7 +492,7 @@ static int adin2111_remove(struct spi_device *spi)
 	/* Reset device */
 	adin2111_soft_reset(priv);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 	return 0;
 #endif
 }

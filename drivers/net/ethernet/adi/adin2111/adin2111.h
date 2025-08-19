@@ -172,6 +172,10 @@ int adin2111_tx_frame(struct adin2111_priv *priv, struct sk_buff *skb, int port)
 void adin2111_rx_handler(struct adin2111_priv *priv);
 struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
 
+/* SPI FIFO operations */
+int adin2111_read_fifo(struct adin2111_priv *priv, u32 reg, u8 *data, size_t len);
+int adin2111_write_fifo(struct adin2111_priv *priv, u32 reg, const u8 *data, size_t len);
+
 /* Utilities */
 void adin2111_get_mac_address(struct adin2111_priv *priv, int port, u8 *addr);
 int adin2111_set_mac_address_hw(struct adin2111_priv *priv, int port, const u8 *addr);
