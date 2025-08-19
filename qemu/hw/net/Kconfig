@@ -1,0 +1,21 @@
+# ADIN2111 Configuration
+# Copyright (c) 2025 Murray Kopit <murr2k@gmail.com>
+
+config ADIN2111
+    bool
+    default y if SSI
+    depends on SSI
+    help
+      ADIN2111 Dual-Port 10BASE-T1L Ethernet Switch/PHY
+      
+      This enables emulation of the Analog Devices ADIN2111
+      dual-port Ethernet switch with integrated PHYs.
+      
+      Features:
+      - SPI slave interface
+      - Dual 10BASE-T1L PHY ports
+      - Internal L2 switch
+      - Cut-through and store-and-forward modes
+      - MAC filtering (16 entries)
+      - IEEE 1588 timestamping support
+      - Diagnostics and statistics
