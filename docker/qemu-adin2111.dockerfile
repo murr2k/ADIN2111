@@ -41,9 +41,9 @@ RUN git clone --depth 1 --branch ${QEMU_VERSION} \
 COPY qemu/hw/net/adin2111.c /qemu/hw/net/
 COPY qemu/include/hw/net/adin2111.h /qemu/include/hw/net/
 
-# Patch QEMU build files - use system_ss for newer QEMU versions
-RUN echo "system_ss.add(when: 'CONFIG_ADIN2111', if_true: files('adin2111.c'))" \
-    >> /qemu/hw/net/meson.build
+# Add ADIN2111 to QEMU build system
+# For QEMU 9.1.0, we need to add it unconditionally to system_ss
+RUN echo "system_ss.add(files('adin2111.c'))" >> /qemu/hw/net/meson.build
 
 # Configure and build QEMU
 WORKDIR /qemu
