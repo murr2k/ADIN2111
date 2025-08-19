@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ needs.build-qemu-container.outputs.image-tag }}
-      options: --privileged
+      options: --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/kvm
     
     strategy:
       fail-fast: false
