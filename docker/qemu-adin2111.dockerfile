@@ -41,8 +41,8 @@ RUN git clone --depth 1 --branch ${QEMU_VERSION} \
 COPY qemu/hw/net/adin2111.c /qemu/hw/net/
 COPY qemu/include/hw/net/adin2111.h /qemu/include/hw/net/
 
-# Patch QEMU build files
-RUN echo "softmmu_ss.add(when: 'CONFIG_ADIN2111', if_true: files('adin2111.c'))" \
+# Patch QEMU build files - use system_ss for newer QEMU versions
+RUN echo "system_ss.add(when: 'CONFIG_ADIN2111', if_true: files('adin2111.c'))" \
     >> /qemu/hw/net/meson.build
 
 # Configure and build QEMU
