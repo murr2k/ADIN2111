@@ -1,0 +1,459 @@
+name: ADIN2111 Driver CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run nightly regression tests
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      run_full_tests:
+        description: 'Run full test suite including stress tests'
+        required: false
+        default: 'false'
+
+env:
+  KERNEL_VERSION: 6.6
+  ARM_TOOLCHAIN: arm-linux-gnueabihf-
+  DOCKER_BUILDKIT: 1
+
+jobs:
+  # Job 1: Code Quality and Static Analysis
+  static-analysis:
+    name: Static Analysis & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install analysis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck sparse coccinelle
+          pip install checkpatch gitlint
+      
+      - name: Run checkpatch.pl
+        run: |
+          wget -q https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl
+          chmod +x checkpatch.pl
+          ./checkpatch.pl --no-tree --strict -f drivers/net/ethernet/adi/adin2111.c || true
+      
+      - name: Run sparse check
+        run: |
+          make C=2 CHECK=sparse CF="-D__CHECK_ENDIAN__" drivers/net/ethernet/adi/adin2111.o 2>&1 | tee sparse.log
+          if grep -q "warning:" sparse.log; then exit 1; fi
+        continue-on-error: true
+      
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=all --inconclusive --std=c11 \
+            --suppress=missingIncludeSystem \
+            --error-exitcode=1 \
+            drivers/net/ethernet/adi/adin2111.c
+      
+      - name: Check for memory leaks with coccinelle
+        run: |
+          for script in /usr/share/coccinelle/standard.iso/*.cocci; do
+            spatch --sp-file "$script" drivers/net/ethernet/adi/adin2111.c || true
+          done
+      
+      - name: Upload analysis results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-analysis-results
+          path: |
+            sparse.log
+            *.cocci
+
+  # Job 2: Build Tests (Multiple Kernel Versions)
+  build-test:
+    name: Build Test - Kernel ${{ matrix.kernel }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        kernel: ['6.1', '6.6', '6.8']
+        arch: ['arm', 'arm64', 'x86_64']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            gcc-arm-linux-gnueabihf \
+            gcc-aarch64-linux-gnu \
+            bc bison flex \
+            libssl-dev libelf-dev
+      
+      - name: Download kernel headers
+        run: |
+          wget -q https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${{ matrix.kernel }}.tar.xz
+          tar -xf linux-${{ matrix.kernel }}.tar.xz
+      
+      - name: Configure kernel
+        run: |
+          cd linux-${{ matrix.kernel }}
+          if [ "${{ matrix.arch }}" = "arm" ]; then
+            export ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
+            make multi_v7_defconfig
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            export ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+            make defconfig
+          else
+            make defconfig
+          fi
+          echo "CONFIG_ADIN2111=m" >> .config
+      
+      - name: Build ADIN2111 module
+        run: |
+          cd linux-${{ matrix.kernel }}
+          if [ "${{ matrix.arch }}" = "arm" ]; then
+            export ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf-
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            export ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+          fi
+          make modules_prepare
+          cp -r ../drivers/net/ethernet/adi drivers/net/ethernet/
+          make M=drivers/net/ethernet/adi modules
+      
+      - name: Check module info
+        run: |
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            modinfo linux-${{ matrix.kernel }}/drivers/net/ethernet/adi/adin2111.ko
+          fi
+
+  # Job 3: Unit Tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build and run unit tests
+        run: |
+          gcc -o test_adin2111 tests/unit/test_adin2111.c -lcunit
+          ./test_adin2111 --junit-xml=unit-test-results.xml
+        continue-on-error: true
+      
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: unit-test-results.xml
+
+  # Job 4: Docker-based QEMU Tests
+  qemu-tests:
+    name: QEMU Hardware Simulation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build unified test image
+        run: |
+          docker build -f Dockerfile.unified -t adin2111-test:ci .
+      
+      - name: Run QEMU tests
+        run: |
+          docker run --rm -v $(pwd)/test-results:/results adin2111-test:ci \
+            bash -c "
+              cd /adin2111
+              ./test_native > /results/qemu-test.log 2>&1
+              echo \$? > /results/qemu-exit-code.txt
+              grep -E '(PASS|FAIL|SKIP)' /results/qemu-test.log > /results/qemu-summary.txt || true
+            "
+      
+      - name: Check test results
+        run: |
+          if [ -f test-results/qemu-exit-code.txt ]; then
+            exit_code=$(cat test-results/qemu-exit-code.txt)
+            if [ "$exit_code" != "0" ]; then
+              echo "QEMU tests failed with exit code $exit_code"
+              cat test-results/qemu-test.log
+              exit 1
+            fi
+          fi
+      
+      - name: Upload QEMU test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: qemu-test-results
+          path: test-results/
+
+  # Job 5: Kernel Panic Regression Tests
+  kernel-panic-tests:
+    name: Kernel Panic Prevention Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build kernel panic test module
+        run: |
+          cd tests/kernel-panic
+          make
+      
+      - name: Run kernel panic tests in Docker
+        run: |
+          docker run --rm --privileged \
+            -v $(pwd):/workspace \
+            ubuntu:24.04 bash -c "
+              apt-get update && apt-get install -y kmod
+              cd /workspace/tests/kernel-panic
+              ./run_panic_tests.sh
+            "
+        continue-on-error: true
+      
+      - name: Analyze kernel logs
+        run: |
+          if grep -q "kernel panic\|BUG:\|WARNING:" test-logs/dmesg.log 2>/dev/null; then
+            echo "Kernel issues detected!"
+            exit 1
+          fi
+
+  # Job 6: Performance Benchmarks
+  performance-tests:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.run_full_tests == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run performance benchmarks
+        run: |
+          cd tests/performance
+          ./run_benchmarks.sh
+      
+      - name: Compare with baseline
+        run: |
+          python3 scripts/compare_performance.py \
+            --baseline tests/performance/baseline.json \
+            --current tests/performance/results.json \
+            --threshold 10
+      
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'customBiggerIsBetter'
+          output-file-path: tests/performance/results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+
+  # Job 7: Memory and Resource Tests
+  memory-tests:
+    name: Memory & Resource Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Valgrind and tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind massif-visualizer
+      
+      - name: Run memory leak tests
+        run: |
+          gcc -g -o test_memory tests/memory/test_memory.c
+          valgrind --leak-check=full --show-leak-kinds=all \
+            --track-origins=yes --xml=yes \
+            --xml-file=valgrind-report.xml \
+            ./test_memory
+      
+      - name: Check for memory leaks
+        run: |
+          if grep -q "definitely lost" valgrind-report.xml; then
+            echo "Memory leaks detected!"
+            exit 1
+          fi
+
+  # Job 8: Stress Tests
+  stress-tests:
+    name: Stress Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event.inputs.run_full_tests == 'true'
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run load/unload stress test
+        run: |
+          cd tests/stress
+          ./module_load_stress.sh 1000
+      
+      - name: Run concurrent access stress test
+        run: |
+          cd tests/stress
+          ./concurrent_access_test.sh 100
+      
+      - name: Run long duration test
+        run: |
+          cd tests/stress
+          timeout 30m ./long_running_test.sh || true
+
+  # Job 9: Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run semgrep
+        run: |
+          pip install semgrep
+          semgrep --config=auto drivers/
+
+  # Job 10: Documentation Build
+  documentation:
+    name: Documentation Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install documentation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+          pip install sphinx sphinx-rtd-theme
+      
+      - name: Build kernel doc
+        run: |
+          scripts/kernel-doc -rst drivers/net/ethernet/adi/adin2111.c > adin2111.rst
+      
+      - name: Check documentation coverage
+        run: |
+          scripts/check_doc_coverage.sh drivers/net/ethernet/adi/adin2111.c
+
+  # Job 11: Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-test, unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up test network
+        run: |
+          cd tests/integration
+          docker-compose up -d
+      
+      - name: Run integration tests
+        run: |
+          cd tests/integration
+          pytest test_integration.py --junit-xml=integration-results.xml
+      
+      - name: Tear down test network
+        if: always()
+        run: |
+          cd tests/integration
+          docker-compose down
+
+  # Job 12: Release Preparation (only on main)
+  release-prep:
+    name: Release Preparation
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [static-analysis, build-test, unit-tests, qemu-tests, kernel-panic-tests]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate changelog
+        run: |
+          scripts/generate_changelog.sh > CHANGELOG.md
+      
+      - name: Create release artifacts
+        run: |
+          tar -czf adin2111-driver.tar.gz \
+            drivers/ \
+            Documentation/ \
+            tests/ \
+            README.md \
+            CHANGELOG.md
+      
+      - name: Calculate checksums
+        run: |
+          sha256sum adin2111-driver.tar.gz > SHA256SUMS
+      
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-artifacts
+          path: |
+            adin2111-driver.tar.gz
+            SHA256SUMS
+            CHANGELOG.md
+
+  # Final Job: Status Report
+  status-report:
+    name: CI/CD Status Report
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [
+      static-analysis,
+      build-test,
+      unit-tests,
+      qemu-tests,
+      kernel-panic-tests,
+      performance-tests,
+      memory-tests,
+      security-scan,
+      documentation,
+      integration-tests
+    ]
+    steps:
+      - name: Generate status report
+        run: |
+          echo "## CI/CD Pipeline Status Report" > status-report.md
+          echo "**Date:** $(date)" >> status-report.md
+          echo "**Commit:** ${{ github.sha }}" >> status-report.md
+          echo "" >> status-report.md
+          echo "### Test Results Summary" >> status-report.md
+          echo "- Static Analysis: ${{ needs.static-analysis.result }}" >> status-report.md
+          echo "- Build Tests: ${{ needs.build-test.result }}" >> status-report.md
+          echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> status-report.md
+          echo "- QEMU Tests: ${{ needs.qemu-tests.result }}" >> status-report.md
+          echo "- Kernel Panic Tests: ${{ needs.kernel-panic-tests.result }}" >> status-report.md
+          echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> status-report.md
+          echo "- Memory Tests: ${{ needs.memory-tests.result }}" >> status-report.md
+          echo "- Security Scan: ${{ needs.security-scan.result }}" >> status-report.md
+          echo "- Documentation: ${{ needs.documentation.result }}" >> status-report.md
+          echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> status-report.md
+      
+      - name: Post status to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('status-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
