@@ -5,25 +5,36 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0-rc1] - 2025-08-19
 
 ### Added
-- Comprehensive GitHub Actions CI/CD pipeline with 12 job categories
-- Docker-based QEMU hardware simulation for STM32MP153
-- Unified Docker test image (adin2111-unified:latest)
-- Stress test scripts for module load/unload (1000× iterations)
-- Concurrent access test framework (100 threads)
-- Kernel panic prevention test suite
-- CI/CD test strategy documentation
-- Performance benchmark framework
-- Security scanning with Trivy and Semgrep
+- **Unit Test Suite**: 16 comprehensive tests across 8 test suites (CUnit framework)
+- **WSL2 Kernel Configuration**: Scripts for proper kernel module building
+- **Docker Build Scripts**: Automated module building in containerized environment
+- **Enhanced CI/CD Pipeline**: Full test automation with GitHub Actions
+- **Improved .gitignore**: Comprehensive exclusions for kernel development
+- **Comprehensive .dockerignore**: Optimized Docker builds with security considerations
 
 ### Fixed
-- All kernel panic scenarios (8 critical issues resolved)
-- Docker image consolidation and organization
+- **Kernel 6.11+ Compatibility**: Removed deprecated `devm_mdiobus_free()` calls
+- **File Structure**: Reorganized to proper Linux kernel directory structure (Issue #6)
+- **Compilation Errors**: Fixed probe/remove function signatures and duplicates
+- **Checkpatch Warnings**: Resolved all 6 warnings (0 errors, 0 warnings achieved)
+- **CppCheck Issues**: Fixed all critical style issues
+- **Docker/QEMU Files**: Located and properly organized (Issue #7)
 
 ### Changed
-- Updated project progress to 75% complete (6/8 phases)
+- **Project Progress**: Updated to 87% complete (7/8 phases)
+- **File Organization**: Moved all driver files to `drivers/net/ethernet/adi/adin2111/`
+- **Code Quality**: Improved with `usleep_range()` instead of `msleep()` for delays < 20ms
+- **Documentation**: Added comprehensive directory tree highlighting ADIN2111 files
+
+### Technical Improvements
+- **Static Analysis**: 100% clean with checkpatch.pl
+- **Unit Tests**: 16/16 tests passing across all suites
+- **Build System**: Docker-based builds to avoid WSL2 kernel header issues
+- **Code Style**: Removed unnecessary braces, fixed trailing whitespace
+- **Error Handling**: Enhanced with proper NULL checks and error paths
 - Enhanced README with latest accomplishments
 
 ## [Phase 6] - 2025-08-18

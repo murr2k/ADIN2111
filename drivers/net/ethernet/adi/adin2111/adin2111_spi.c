@@ -101,7 +101,8 @@ int adin2111_write_reg(struct adin2111_priv *priv, u32 reg, u32 val)
 	return regmap_write(priv->regmap, reg, val);
 }
 
-int adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val)
+/* Currently unused but may be needed for future features */
+int __maybe_unused adin2111_modify_reg(struct adin2111_priv *priv, u32 reg, u32 mask, u32 val)
 {
 	return regmap_update_bits(priv->regmap, reg, mask, val);
 }

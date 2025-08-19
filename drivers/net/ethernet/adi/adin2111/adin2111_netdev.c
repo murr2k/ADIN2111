@@ -254,7 +254,8 @@ out:
 	return ret;
 }
 
-void adin2111_rx_handler(struct adin2111_priv *priv)
+/* Currently unused - will be used when interrupt handling is implemented */
+void __maybe_unused adin2111_rx_handler(struct adin2111_priv *priv)
 {
 	u32 rx_fsize, frame_size, port_mask;
 	u8 *frame_buf;

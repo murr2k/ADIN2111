@@ -22,10 +22,6 @@
 #include "adin2111.h"
 #include "adin2111_regs.h"
 
-/* External function declarations */
-extern struct regmap *adin2111_init_regmap(struct spi_device *spi);
-extern struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
-
 static void adin2111_work_handler(struct work_struct *work)
 {
 	struct adin2111_priv *priv = container_of(work, struct adin2111_priv, irq_work);
@@ -62,17 +58,14 @@ static void adin2111_work_handler(struct work_struct *work)
 	}
 
 	/* Handle errors */
-	if (status1 & ADIN2111_STATUS1_SPI_ERR) {
+	if (status1 & ADIN2111_STATUS1_SPI_ERR)
 		dev_err(&priv->spi->dev, "SPI error detected\n");
-	}
 
-	if (status0 & ADIN2111_STATUS0_TXPE) {
+	if (status0 & ADIN2111_STATUS0_TXPE)
 		dev_err(&priv->spi->dev, "TX protocol error\n");
-	}
 
-	if (status0 & ADIN2111_STATUS0_RXEVM) {
+	if (status0 & ADIN2111_STATUS0_RXEVM)
 		dev_err(&priv->spi->dev, "RX error\n");
-	}
 
 	/* Clear processed interrupts by writing to status registers */
 	adin2111_write_reg(priv, ADIN2111_STATUS0, status0);
@@ -100,9 +93,9 @@ int adin2111_hw_reset(struct adin2111_priv *priv)
 {
 	if (priv->reset_gpio) {
 		gpiod_set_value_cansleep(priv->reset_gpio, 1);
-		msleep(10);
+		usleep_range(10000, 15000); /* 10-15ms reset pulse */
 		gpiod_set_value_cansleep(priv->reset_gpio, 0);
-		msleep(100);
+		msleep(100); /* 100ms recovery time */
 		return 0;
 	}
 	return -ENODEV;
@@ -291,7 +284,7 @@ static int adin2111_parse_dt(struct adin2111_priv *priv)
 	return 0;
 }
 
-int adin2111_probe(struct spi_device *spi)
+static int adin2111_probe(struct spi_device *spi)
 {
 	struct adin2111_priv *priv;
 	struct net_device *netdev;
@@ -362,9 +355,8 @@ int adin2111_probe(struct spi_device *spi)
 	if (ret) {
 		dev_err(&spi->dev, "PHY initialization failed: %d\n", ret);
 		/* PHY init failure is critical - clean up properly */
-		if (priv->irq_work.func) {
+		if (priv->irq_work.func)
 			cancel_work_sync(&priv->irq_work);
-		}
 		adin2111_soft_reset(priv);
 		return ret;
 	}
@@ -454,15 +446,14 @@ err_cleanup_phy:
 	return ret;
 }
 
-void adin2111_remove(struct spi_device *spi)
+static int adin2111_remove(struct spi_device *spi)
 {
 	struct adin2111_priv *priv = spi_get_drvdata(spi);
-	int i;
 
 	/* Validate priv to prevent kernel panic */
 	if (!priv) {
 		dev_err(&spi->dev, "No private data in remove\n");
-		return;
+		return 0;
 	}
 
 	dev_info(&spi->dev, "Removing ADIN2111 driver\n");
@@ -472,6 +463,8 @@ void adin2111_remove(struct spi_device *spi)
 
 	/* Cleanup network devices */
 	if (priv->switch_mode) {
+		int i;
+
 		for (i = 0; i < ADIN2111_PORTS; i++) {
 			if (priv->ports[i].netdev) {
 				unregister_netdev(priv->ports[i].netdev);
@@ -488,6 +481,8 @@ void adin2111_remove(struct spi_device *spi)
 
 	/* Reset device */
 	adin2111_soft_reset(priv);
+
+	return 0;
 }
 
 static const struct of_device_id adin2111_of_match[] = {

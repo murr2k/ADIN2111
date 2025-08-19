@@ -1,6 +1,81 @@
+# Linux Kernel Module Development
+*.ko
+*.ko.cmd
+*.o
+*.o.cmd
+*.mod
+*.mod.c
+*.mod.o
+*.symvers
+*.order
+modules.order
+Module.symvers
+.tmp_versions/
+.cache.mk
+.*.cmd
+.*.d
+*.dwo
+*.su
+
+# Build directories
+build/
+out/
+output/
+
+# Kernel build artifacts
+vmlinux
+System.map
+Module.markers
+modules.builtin
+*.elf
+
+# Test artifacts
+test_adin2111
+*.test
+test-results.xml
+test-results/
+coverage/
+*.gcov
+*.gcda
+*.gcno
+lcov.info
+
+# Docker artifacts
+*.tar
+*.tar.gz
+adin2111_driver.ko
+adin2111-builder
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+tags
+TAGS
+cscope.*
+.project
+.cproject
+.settings/
+
+# Documentation build
+docs/_build/
+*.pdf
+doxygen/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.log
+*.orig
+*.rej
 
 # Claude Flow generated files
 .claude/settings.local.json
+.claude-flow/
 .mcp.json
 claude-flow.config.json
 .swarm/
@@ -23,3 +98,66 @@ claude-flow
 claude-flow.bat
 claude-flow.ps1
 hive-mind-prompt-*.txt
+
+# Python cache (for any test scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Archives
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.7z
+
+# Security - Never commit these
+*.pem
+*.key
+*.crt
+*.p12
+.env
+.env.local
+secrets/
+private/
+
+# Crash dumps
+core
+core.*
+*.core
+vgcore.*
+
+# Kernel crash dumps
+vmcore
+crash/
+
+# QEMU/Emulation
+*.qcow2
+*.img
+*.iso
+initramfs/
+rootfs/
+
+# Analysis reports (keep only source)
+analysis/reports/*.txt
+analysis/reports/*.xml
+!analysis/reports/.gitkeep
+
+# Build logs
+build.log
+compile.log
+make.log
+
+# Generated documentation
+ISSUE_*_STATUS.md
+CI_CD_BUILD_REPORT.md
+FILE_REORGANIZATION_SUMMARY.md
+
+# Local configuration
+.config.local
+config.mk.local
+
+# WSL2 kernel source (large external repo)
+src/WSL2-Linux-Kernel/

@@ -109,9 +109,9 @@ struct adin2111_priv {
 /* Function prototypes */
 
 /* Main driver */
-int adin2111_probe(struct spi_device *spi);
-void adin2111_remove(struct spi_device *spi);
 int adin2111_soft_reset(struct adin2111_priv *priv);
+struct regmap *adin2111_init_regmap(struct spi_device *spi);
+struct net_device *adin2111_create_netdev(struct adin2111_priv *priv, int port_num);
 
 /* SPI interface */
 int adin2111_spi_init(struct adin2111_priv *priv);

@@ -1,0 +1,191 @@
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# GitHub files  
+.github/
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+.github/
+
+# Documentation (not needed in Docker build)
+docs/
+*.md
+README.md
+CHANGELOG.md
+LICENSE
+TODO.md
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+tags
+TAGS
+cscope.*
+.project
+.cproject
+.settings/
+.editorconfig
+
+# Build artifacts (will be built fresh in container)
+*.ko
+*.ko.cmd
+*.o
+*.o.cmd
+*.mod
+*.mod.c
+*.mod.o
+*.symvers
+*.order
+modules.order
+Module.symvers
+.tmp_versions/
+.cache.mk
+.*.cmd
+.*.d
+*.dwo
+*.su
+build/
+out/
+output/
+
+# Test artifacts
+test_adin2111
+*.test
+test-results.xml
+test-results/
+coverage/
+*.gcov
+*.gcda
+*.gcno
+lcov.info
+tests/unit/test_adin2111
+tests/unit/*.o
+
+# Docker-specific (avoid recursive copying)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+docker/
+
+# Archives and large files
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.7z
+*.img
+*.iso
+*.qcow2
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*.log
+*.orig
+*.rej
+tmp/
+temp/
+
+# Claude Flow / MCP files
+.claude/
+.claude-flow/
+.mcp.json
+claude-flow.config.json
+.swarm/
+.hive-mind/
+memory/
+coordination/
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+
+# Security - Never include in images
+*.pem
+*.key
+*.crt
+*.p12
+.env
+.env.*
+secrets/
+private/
+credentials/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Crash dumps
+core
+core.*
+*.core
+vgcore.*
+vmcore
+crash/
+
+# Analysis reports
+analysis/reports/
+
+# CI/CD artifacts
+.gitlab-ci.yml
+.travis.yml
+azure-pipelines.yml
+Jenkinsfile
+circleci/
+
+# WSL2 kernel source (huge)
+src/WSL2-Linux-Kernel/
+
+# QEMU/Emulation files
+initramfs/
+rootfs/
+qemu/
+
+# Backup files
+*.backup
+*.old
+*.save
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+.directory
+.Trash-*
+
+# Keep only necessary source files
+!drivers/
+!tests/
+!scripts/
+!Makefile*
+!Kconfig
+!*.c
+!*.h

@@ -1,0 +1,35 @@
+# Standalone Makefile for ADIN2111 driver module
+# For use when kernel source is not fully configured
+
+obj-m := adin2111.o
+adin2111-objs := adin2111_main.o adin2111_spi.o adin2111_mdio.o adin2111_netdev.o
+
+# Path to kernel source (adjust as needed)
+KERNELDIR ?= ~/projects/ADIN2111/src/WSL2-Linux-Kernel
+PWD := $(shell pwd)
+
+# Add include paths for kernel headers
+EXTRA_CFLAGS += -I$(KERNELDIR)/include
+EXTRA_CFLAGS += -I$(KERNELDIR)/include/uapi
+EXTRA_CFLAGS += -I$(KERNELDIR)/arch/x86/include
+EXTRA_CFLAGS += -I$(KERNELDIR)/arch/x86/include/generated
+
+all:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
+
+# Alternative build using system headers if available
+system-build:
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+# Build using Docker with proper kernel headers
+docker-build:
+	docker run --rm -v $(PWD):/workspace \
+		-w /workspace \
+		ubuntu:22.04 \
+		bash -c "apt-get update && apt-get install -y linux-headers-generic build-essential && \
+		         make -C /usr/src/linux-headers-\$$(uname -r) M=/workspace modules"
+
+.PHONY: all clean system-build docker-build
