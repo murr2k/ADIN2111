@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  test-network:
+    image: ubuntu:22.04
+    container_name: adin2111-test-network
+    command: sleep infinity
+    networks:
+      - test-net
+    environment:
+      - TEST_MODE=integration
+
+networks:
+  test-net:
+    driver: bridge
