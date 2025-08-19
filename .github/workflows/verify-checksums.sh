@@ -15,14 +15,13 @@ NC='\033[0m' # No Color
 declare -A CHECKSUMS
 
 # Busybox checksums
-CHECKSUMS["busybox-1.35.0-x86_64"]="6e123e7f3202b28b9b1ae1d12a9ca65a888ec8dc60e23bc8419e7fa0289bd54e"
-CHECKSUMS["busybox-1.36.0-x86_64"]="b7bfcd4b1c4ec8f3e7e7c0f8e0e0f7f9c2c3d3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3"
+CHECKSUMS["busybox-1.35.0-x86_64"]="6e123e7f3202a8c1e9b1f94d8941580a25135382b99e8d3e34fb858bba311348"
 
 # Linux kernel checksums (update for new releases)
 CHECKSUMS["linux-6.1.tar.xz"]="2ca1f17051a430f6fed1196e4952717507171acfd97d96577212502703b25deb"
 CHECKSUMS["linux-6.6.tar.xz"]="d926a06c63dd8ac7df3f86ee1ffc2ce2a3b81a2d168484e76b5b389aba8e56d0"
 CHECKSUMS["linux-6.8.tar.xz"]="c969dea4e8bb6be991bbf7c010ba0e0a5643a3a8d8fb0a2aaa053406f1e965f3"
-CHECKSUMS["linux-6.9.tar.xz"]="placeholder_update_when_6.9_releases"
+CHECKSUMS["linux-6.9.tar.xz"]="24fa01fb989c7a3e28453f117799168713766e119c5381dac30115f18f268149"
 
 # QEMU checksums
 CHECKSUMS["qemu-9.1.0.tar.xz"]="816b7022a8ba7c2ac30e2e0cf973e826f6bcc8505339603212c5ede8e94d7834"
