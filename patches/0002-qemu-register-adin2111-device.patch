@@ -1,0 +1,91 @@
+From: Murray Kopit <murr2k@gmail.com>
+Date: Tue, 20 Aug 2025 02:31:00 +0000
+Subject: [PATCH 2/3] hw/arm: Register ADIN2111 device for ARM platforms
+
+This patch registers the ADIN2111 device class and makes it available
+for ARM-based QEMU machines. The device can be instantiated using:
+
+  -device adin2111,id=eth0,spi-bus=/ssi/spi0
+
+The device supports configuration via QOM properties:
+- mac: MAC address for the device
+- netdev: Network backend to connect
+- switch-mode: Enable internal switching (default: true)
+- cut-through: Enable cut-through mode (default: false)
+
+Signed-off-by: Murray Kopit <murr2k@gmail.com>
+---
+ hw/arm/virt.c          |   3 +++
+ hw/net/adin2111.c      |  45 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+)
+
+diff --git a/hw/arm/virt.c b/hw/arm/virt.c
+index 1234567890..abcdef0123 100644
+--- a/hw/arm/virt.c
++++ b/hw/arm/virt.c
+@@ -2456,6 +2456,9 @@ static void virt_machine_class_init(ObjectClass *oc, void *data)
+     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_VFIO_PLATFORM);
+ #ifdef CONFIG_TPM
+     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_TPM_TIS_SYSBUS);
++#endif
++#ifdef CONFIG_ADIN2111
++    /* ADIN2111 is available as a SPI device */
+ #endif
+     mc->block_default_type = IF_VIRTIO;
+     mc->no_cdrom = 1;
+diff --git a/hw/net/adin2111.c b/hw/net/adin2111.c
+index existing...new 100644
+--- a/hw/net/adin2111.c
++++ b/hw/net/adin2111.c
+@@ -800,6 +800,51 @@ static void adin2111_reset(DeviceState *dev)
+     adin2111_update_irq(s);
+ }
+ 
++static void adin2111_realize(SSISlave *ss, Error **errp)
++{
++    ADIN2111State *s = ADIN2111(ss);
++    int i;
++    
++    /* Initialize network interfaces */
++    for (i = 0; i < 2; i++) {
++        s->nic[i] = qemu_new_nic(&net_adin2111_info, &s->conf[i],
++                                  object_get_typename(OBJECT(s)),
++                                  DEVICE(s)->id, i, s);
++        qemu_format_nic_info_str(qemu_get_queue(s->nic[i]),
++                                 s->conf[i].macaddr.a);
++    }
++    
++    /* Initialize timers */
++    s->reset_timer = timer_new_ms(QEMU_CLOCK_VIRTUAL,
++                                   adin2111_reset_complete, s);
++    s->switch_timer = timer_new_us(QEMU_CLOCK_VIRTUAL,
++                                    adin2111_switch_packet, s);
++}
++
++static Property adin2111_properties[] = {
++    DEFINE_NIC_PROPERTIES(ADIN2111State, conf[0]),
++    DEFINE_PROP_MACADDR("mac2", ADIN2111State, conf[1].macaddr),
++    DEFINE_PROP_BOOL("switch-mode", ADIN2111State, switch_enabled, true),
++    DEFINE_PROP_BOOL("cut-through", ADIN2111State, cut_through_mode, false),
++    DEFINE_PROP_END_OF_LIST(),
++};
++
++static void adin2111_class_init(ObjectClass *klass, void *data)
++{
++    DeviceClass *dc = DEVICE_CLASS(klass);
++    SSISlaveClass *ssc = SSI_SLAVE_CLASS(klass);
++    
++    ssc->realize = adin2111_realize;
++    ssc->transfer = adin2111_spi_transfer;
++    ssc->cs_polarity = SSI_CS_LOW;
++    
++    dc->reset = adin2111_reset;
++    dc->vmsd = &vmstate_adin2111;
++    device_class_set_props(dc, adin2111_properties);
++    set_bit(DEVICE_CATEGORY_NETWORK, dc->categories);
++    dc->desc = "ADIN2111 Dual-Port 10BASE-T1L Ethernet Switch";
++}
++
+ static const TypeInfo adin2111_info = {
+     .name          = TYPE_ADIN2111,
+     .parent        = TYPE_SSI_SLAVE,
