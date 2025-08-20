@@ -233,11 +233,13 @@ QEMU_CMD="qemu/build/qemu-system-arm \
     -m 128M \
     -kernel linux-${KERNEL_VERSION}/arch/arm/boot/Image \
     -initrd initramfs.cpio.gz \
-    -device adin2111,id=eth0 \
-    -device adin2111,id=eth1 \
-    -append 'console=ttyAMA0 panic=1 debug' \
+    -append 'console=ttyAMA0 panic=1 debug adin2111.debug=1' \
     -nographic \
     -serial mon:stdio"
+
+# Note: ADIN2111 is an SPI slave device and cannot be added via -device
+# It requires proper device tree configuration or platform device setup
+# The driver will be loaded as a kernel module within the guest OS
 
 echo -e "\n${YELLOW}QEMU Command:${NC}"
 echo "$QEMU_CMD"

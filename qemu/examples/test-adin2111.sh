@@ -25,14 +25,15 @@ run_qemu() {
     
     echo "Running test: $test_name"
     
+    # Note: ADIN2111 is an SPI slave device and requires device tree setup
+    # It cannot be added via -device parameter
     $QEMU \
         -M vexpress-a9 \
         -kernel "$KERNEL" \
         -dtb "$DTB" \
         -drive file="$ROOTFS",if=sd,format=raw \
-        -append "console=ttyAMA0 root=/dev/mmcblk0 rw" \
+        -append "console=ttyAMA0 root=/dev/mmcblk0 rw adin2111.debug=1" \
         -nographic \
-        -device adin2111,netdev=net0,netdev2=net1 \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
         -netdev user,id=net1 \
         "$@"

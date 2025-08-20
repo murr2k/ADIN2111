@@ -321,7 +321,7 @@ qemu-system-arm \
     -kernel /workspace/vmlinuz-stm32mp153 \
     -initrd initramfs-stm32mp153.cpio.gz \
     -append "console=ttyAMA0 init=/init" \
-    -device adin2111,id=eth0 \
+    \
     2>&1 || echo "Note: Full kernel build needed for complete test"
 
 echo ""
