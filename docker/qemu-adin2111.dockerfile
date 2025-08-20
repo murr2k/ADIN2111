@@ -37,13 +37,9 @@ ENV CCACHE_MAXSIZE=1G
 RUN git clone --depth 1 --branch ${QEMU_VERSION} \
     https://gitlab.com/qemu-project/qemu.git /qemu
 
-# Copy ADIN2111 model files
-COPY qemu/hw/net/adin2111.c /qemu/hw/net/
-COPY qemu/include/hw/net/adin2111.h /qemu/include/hw/net/
-
-# Add ADIN2111 to QEMU build system
-# For QEMU 9.1.0, we need to add it unconditionally to system_ss
-RUN echo "system_ss.add(files('adin2111.c'))" >> /qemu/hw/net/meson.build
+# Note: ADIN2111 is an SPI slave device handled by the Linux kernel driver
+# It does not require a QEMU device model since it's accessed via SPI bus
+# The driver will be loaded as a kernel module in the guest OS
 
 # Configure and build QEMU
 WORKDIR /qemu
