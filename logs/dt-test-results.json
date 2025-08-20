@@ -1,0 +1,739 @@
+{
+    "timestamp": "2025-08-19T21:37:31-07:00",
+    "test_run_id": "20250819_213731",
+    "summary": {
+        "total_tests": 104,
+        "passed": 11,
+        "failed": 0,
+        "success_rate": 10
+    },
+    "tests": [
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31] Testing device tree compilation...,
+            "category": "[21"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31] ⚠ Device tree compiler not available, simulating compilation tests,
+            "category": "[21"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31] Testing QEMU compatibility...,
+            "category": "[21"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31] Testing kernel configuration...,
+            "category": "[21"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "KERNEL_SPI_PL022...",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "KERNEL_SPI_PL022",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003330933s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003330933s)"
+        }
+,
+        {
+            "name": "KERNEL_SPI_PL022",
+            "status": "PASS",
+            "duration": .003330933,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "KERNEL_ADIN2111...",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "KERNEL_ADIN2111",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003789736s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003789736s)"
+        }
+,
+        {
+            "name": "KERNEL_ADIN2111",
+            "status": "PASS",
+            "duration": .003789736,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "KERNEL_ARM_VIRT...",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "KERNEL_ARM_VIRT",
+            "status": "",
+            "duration": ,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003346961s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003346961s)"
+        }
+,
+        {
+            "name": "KERNEL_ARM_VIRT",
+            "status": "PASS",
+            "duration": .003346961,
+            "category": "KERNEL"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31] Testing device tree content validation...,
+            "category": "[21"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_SINGLE_SPI_ADDR...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_SINGLE_SPI_ADDR",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003324421s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003324421s)"
+        }
+,
+        {
+            "name": "DT_SINGLE_SPI_ADDR",
+            "status": "PASS",
+            "duration": .003324421,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_SINGLE_ADIN2111...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_SINGLE_ADIN2111",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003347962s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003347962s)"
+        }
+,
+        {
+            "name": "DT_SINGLE_ADIN2111",
+            "status": "PASS",
+            "duration": .003347962,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_SINGLE_MAC_UNIQUE...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_SINGLE_MAC_UNIQUE",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.005864169s)",
+            "status": "",
+            "duration": ,
+            "category": "(.005864169s)"
+        }
+,
+        {
+            "name": "DT_SINGLE_MAC_UNIQUE",
+            "status": "PASS",
+            "duration": .005864169,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_SINGLE_IRQ_CONFIG...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_SINGLE_IRQ_CONFIG",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003560034s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003560034s)"
+        }
+,
+        {
+            "name": "DT_SINGLE_IRQ_CONFIG",
+            "status": "PASS",
+            "duration": .003560034,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_DUAL_TWO_DEVICES...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_DUAL_TWO_DEVICES",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.003344557s)",
+            "status": "",
+            "duration": ,
+            "category": "(.003344557s)"
+        }
+,
+        {
+            "name": "DT_DUAL_TWO_DEVICES",
+            "status": "PASS",
+            "duration": .003344557,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_DUAL_FOUR_PORTS...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_DUAL_FOUR_PORTS",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.004071830s)",
+            "status": "",
+            "duration": ,
+            "category": "(.004071830s)"
+        }
+,
+        {
+            "name": "DT_DUAL_FOUR_PORTS",
+            "status": "PASS",
+            "duration": .004071830,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_DUAL_MAC_UNIQUE...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_DUAL_MAC_UNIQUE",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.005666723s)",
+            "status": "",
+            "duration": ,
+            "category": "(.005666723s)"
+        }
+,
+        {
+            "name": "DT_DUAL_MAC_UNIQUE",
+            "status": "PASS",
+            "duration": .005666723,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "Running",
+            "status": "",
+            "duration": ,
+            "category": "Running"
+        }
+,
+        {
+            "name": "DT_DUAL_DIFF_IRQ...",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "[21",
+            "status": "37",
+            "duration": 31],
+            "category": "[21"
+        }
+,
+        {
+            "name": "✓",
+            "status": "",
+            "duration": ,
+            "category": "✓"
+        }
+,
+        {
+            "name": "DT_DUAL_DIFF_IRQ",
+            "status": "",
+            "duration": ,
+            "category": "DT"
+        }
+,
+        {
+            "name": "completed",
+            "status": "",
+            "duration": ,
+            "category": "completed"
+        }
+,
+        {
+            "name": "(.004231009s)",
+            "status": "",
+            "duration": ,
+            "category": "(.004231009s)"
+        }
+,
+        {
+            "name": "DT_DUAL_DIFF_IRQ",
+            "status": "PASS",
+            "duration": .004231009,
+            "category": "DT"
+        }
+    ]
+}

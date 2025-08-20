@@ -1,0 +1,19 @@
+ADIN2111 Device Tree Integration Test Results
+Generated: Tue Aug 19 21:37:32 PDT 2025
+
+Total Tests: 0
+Passed: 0
+Failed: 0
+Success Rate: 0%
+
+Device Tree Files:
+- virt-adin2111.dts: Single ADIN2111 configuration
+- virt-adin2111-dual.dts: Dual ADIN2111 configuration
+
+Test Categories:
+- Device Tree Compilation (DTC)
+- QEMU Compatibility (QEMU)
+- Kernel Configuration (KERNEL)  
+- Device Tree Content Validation (DT)
+
+For detailed results, see: /home/murr2k/projects/ADIN2111/logs/dt-test-results.json

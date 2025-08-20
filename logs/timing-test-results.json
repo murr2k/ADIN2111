@@ -1,0 +1,112 @@
+{
+  "test_suite": "ADIN2111 Timing Validation",
+  "timestamp": "2025-08-19T21:45:51.545074",
+  "total_tests": 8,
+  "passed": 4,
+  "failed": 4,
+  "success_rate": 50.0,
+  "datasheet_compliance": false,
+  "specifications": {
+    "reset_time_ms": {
+      "min": 47.5,
+      "max": 52.5,
+      "nominal": 50.0
+    },
+    "power_on_time_ms": {
+      "min": 40.85,
+      "max": 45.15,
+      "nominal": 43.0
+    },
+    "phy_rx_latency_us": {
+      "min": 5.76,
+      "max": 7.04,
+      "nominal": 6.4
+    },
+    "phy_tx_latency_us": {
+      "min": 2.88,
+      "max": 3.52,
+      "nominal": 3.2
+    },
+    "switch_latency_us": {
+      "min": 11.34,
+      "max": 13.86,
+      "nominal": 12.6
+    },
+    "spi_clock_freq_mhz": {
+      "min": 1.0,
+      "max": 50.0,
+      "nominal": 25.0
+    },
+    "link_detection_ms": {
+      "min": 950,
+      "max": 1050,
+      "nominal": 1000
+    }
+  },
+  "test_results": [
+    {
+      "name": "Device Reset Time",
+      "result": "PASS",
+      "expected": "47.5-52.5ms",
+      "actual": "51.18ms (range: 51.05-51.27ms)",
+      "details": "Measured over 10 iterations",
+      "timestamp": "2025-08-19T21:45:45.188891"
+    },
+    {
+      "name": "Power-On Time",
+      "result": "PASS",
+      "expected": "40.85-45.15ms",
+      "actual": "42.13ms",
+      "details": "From power application to device ready",
+      "timestamp": "2025-08-19T21:45:45.526114"
+    },
+    {
+      "name": "PHY RX Latency",
+      "result": "FAIL",
+      "expected": "5.76-7.04\u00b5s",
+      "actual": "80.88\u00b5s",
+      "details": "Signal detection to data availability",
+      "timestamp": "2025-08-19T21:45:45.527872"
+    },
+    {
+      "name": "PHY TX Latency",
+      "result": "FAIL",
+      "expected": "2.88-3.52\u00b5s",
+      "actual": "86.52\u00b5s",
+      "details": "Data ready to signal transmission",
+      "timestamp": "2025-08-19T21:45:45.529784"
+    },
+    {
+      "name": "Switch Latency",
+      "result": "FAIL",
+      "expected": "11.34-13.86\u00b5s",
+      "actual": "92.12\u00b5s",
+      "details": "Port-to-port packet forwarding time",
+      "timestamp": "2025-08-19T21:45:45.531272"
+    },
+    {
+      "name": "SPI Transaction Time",
+      "result": "FAIL",
+      "expected": "<10.0\u00b5s",
+      "actual": "74.36\u00b5s",
+      "details": "32-bit register access time",
+      "timestamp": "2025-08-19T21:45:45.535117"
+    },
+    {
+      "name": "Link Detection Time",
+      "result": "PASS",
+      "expected": "950-1050ms",
+      "actual": "1001ms",
+      "details": "Cable connection to link establishment",
+      "timestamp": "2025-08-19T21:45:50.541056"
+    },
+    {
+      "name": "Timing Consistency (Reset)",
+      "result": "PASS",
+      "expected": "\u03c3<2.51ms",
+      "actual": "\u03c3=0.04ms",
+      "details": "Jitter analysis over 20 measurements",
+      "timestamp": "2025-08-19T21:45:51.544976"
+    }
+  ]
+}

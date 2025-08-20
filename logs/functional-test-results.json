@@ -1,0 +1,19 @@
+{
+  "test_suite": "ADIN2111 Functional Tests",
+  "timestamp": "2025-08-19T21:48:20-07:00",
+  "duration": 3,
+  "total_tests": 8,
+  "passed": 7,
+  "failed": 1,
+  "success_rate": 87.50,
+  "test_cases": [
+    {"id": "TC001", "name": "Device Probe", "status": "completed"},
+    {"id": "TC002", "name": "Interface Creation", "status": "completed"},
+    {"id": "TC003", "name": "Link State", "status": "completed"},
+    {"id": "TC004", "name": "Basic Connectivity", "status": "completed"},
+    {"id": "TC005", "name": "Dual Port Operation", "status": "completed"},
+    {"id": "TC006", "name": "MAC Filtering", "status": "completed"},
+    {"id": "TC007", "name": "Statistics", "status": "completed"},
+    {"id": "TC008", "name": "Error Handling", "status": "completed"}
+  ]
+}

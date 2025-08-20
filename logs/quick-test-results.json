@@ -1,0 +1,24 @@
+{
+    "timestamp": "2025-08-19T21:38:09-07:00",
+    "test_type": "quick_device_tree_test",
+    "summary": {
+        "total_tests": 14,
+        "passed": 14,
+        "failed": 0,
+        "success_rate": 100
+    },
+    "device_trees": {
+        "single_config": {
+            "file": "virt-adin2111.dts",
+            "exists": true,
+            "adin2111_devices": 1,
+            "ethernet_ports": 2
+        },
+        "dual_config": {
+            "file": "virt-adin2111-dual.dts",
+            "exists": true,
+            "adin2111_devices": 2,
+            "ethernet_ports": 4
+        }
+    }
+}
