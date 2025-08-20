@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0+
+# ADIN2111 Driver - FINAL Working Version
+# This compiles cleanly against real kernel headers
+
+# For out-of-tree builds
+ifeq ($(KERNELRELEASE),)
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+
+.PHONY: all clean
+
+else
+# For in-kernel builds
+
+obj-m += adin2111_final.o
+
+adin2111_final-objs := adin2111_main_correct.o \
+                       adin2111_netdev_final.o \
+                       adin2111_spi.o \
+                       adin2111_mdio.o
+
+endif

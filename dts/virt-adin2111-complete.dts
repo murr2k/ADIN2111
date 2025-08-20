@@ -1,0 +1,106 @@
+/dts-v1/;
+
+/ {
+    interrupt-parent = <&intc>;
+    #size-cells = <2>;
+    #address-cells = <2>;
+    compatible = "linux,dummy-virt";
+
+    chosen {
+        stdout-path = "/pl011@9000000";
+    };
+
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x00 0x40000000 0x00 0x10000000>;
+    };
+
+    intc: interrupt-controller@8000000 {
+        compatible = "arm,gic-400";
+        #interrupt-cells = <3>;
+        interrupt-controller;
+        reg = <0x00 0x08000000 0x00 0x00010000>,
+              <0x00 0x08010000 0x00 0x00010000>;
+    };
+
+    pl011@9000000 {
+        compatible = "arm,pl011", "arm,primecell";
+        reg = <0x00 0x09000000 0x00 0x00001000>;
+        interrupts = <0 1 4>;
+        clocks = <&apb_pclk>, <&apb_pclk>;
+        clock-names = "uartclk", "apb_pclk";
+    };
+
+    spi@9060000 {
+        compatible = "arm,pl022", "arm,primecell";
+        reg = <0x00 0x09060000 0x00 0x00001000>;
+        interrupts = <0 10 4>;
+        clocks = <&apb_pclk>, <&apb_pclk>;
+        clock-names = "sspclk", "apb_pclk";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        num-cs = <1>;
+        status = "okay";
+        
+        adin2111@0 {
+            compatible = "adi,adin2111";
+            reg = <0>;  /* Chip select 0 */
+            spi-max-frequency = <25000000>;  /* 25MHz max SPI clock */
+            interrupt-parent = <&intc>;
+            interrupts = <0 11 4>;  /* SPI IRQ + 1 for ADIN2111 */
+            status = "okay";
+            
+            /* Switch mode configuration */
+            adi,switch-mode;
+            
+            /* Port configuration */
+            ports {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                
+                port@0 {
+                    reg = <0>;
+                    label = "lan0";
+                };
+                
+                port@1 {
+                    reg = <1>;
+                    label = "lan1";
+                };
+            };
+            
+            /* MDIO bus for PHYs */
+            mdio {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                
+                ethernet-phy@0 {
+                    reg = <0>;
+                };
+                
+                ethernet-phy@1 {
+                    reg = <1>;
+                };
+            };
+        };
+    };
+
+    apb_pclk: apb-pclk {
+        compatible = "fixed-clock";
+        #clock-cells = <0>;
+        clock-frequency = <24000000>;
+    };
+
+    timer {
+        compatible = "arm,armv7-timer";
+        interrupts = <1 13 0xf08>,
+                     <1 14 0xf08>,
+                     <1 11 0xf08>,
+                     <1 10 0xf08>;
+    };
+
+    psci {
+        compatible = "arm,psci-1.0";
+        method = "smc";
+    };
+};

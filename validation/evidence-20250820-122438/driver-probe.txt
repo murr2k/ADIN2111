@@ -1,0 +1,5 @@
+adin2111 spi0.0: Device tree parsed: switch_mode=0, cut_through=0
+adin2111 spi0.0: Hardware initialized successfully
+adin2111 spi0.0: PHY initialization completed
+adin2111 spi0.0: Registered netdev: eth0
+adin2111 spi0.0: ADIN2111 driver probe completed successfully

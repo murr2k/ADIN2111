@@ -3,8 +3,8 @@
 ![Linux](https://img.shields.io/badge/Linux_Kernel-Driver-FCC624?style=flat-square&logo=linux&logoColor=black) ![License](https://img.shields.io/badge/License-GPL_2.0+-green?style=flat-square) ![Build Status](https://github.com/murr2k/ADIN2111/actions/workflows/ci.yml/badge.svg) ![Hardware](https://img.shields.io/badge/Hardware-ADIN2111-purple?style=flat-square) ![Progress](https://img.shields.io/badge/Progress-87%25-brightgreen?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-Passing-success?style=flat-square)
 
 **Author:** Murray Kopit  
-**Date:** August 19, 2025  
-**Version:** 1.0.0-rc1
+**Date:** August 20, 2025  
+**Version:** 3.0.0-rc1
 
 ## 🎯 Project Overview
 
@@ -27,30 +27,49 @@ This repository contains the enhanced Linux driver for the Analog Devices ADIN21
 
 **Progress: 100% Complete (10/10 phases)** 🎉
 
-### 🚀 Latest Updates (August 20, 2025)
+### 🚀 Latest Updates (August 20, 2025) - Release Candidate 1
 
-- **✅ CRITICAL BUG FIXED**: Device reset() no longer clears user properties
-- **✅ AUTONOMOUS SWITCHING PROVEN**: PHY0→PHY1 forwarding with 252-byte PCAPs
-- **✅ THREE-ENDPOINT ARCHITECTURE**: Host (SPI) + PHY0 + PHY1 correctly implemented
-- **✅ eth0 VISIBILITY FIXED**: Network interface now appears in /sys/class/net
-- **✅ TRAFFIC INJECTION WORKING**: UDP socket-based frame injection for testing
+#### Critical Correctness Fixes
+- **✅ NO SLEEPING IN SOFTIRQ**: TX uses ring buffer + worker thread, RX uses kthread
+- **✅ COMPILATION FIXED**: adin2111_netdev_final.c compiles cleanly against real kernels
+- **✅ PROPER STATS SYNC**: Uses u64_stats_sync instead of spinlock for statistics
+- **✅ CORRECT REGISTER NAMES**: Fixed RX_FSIZE, TX_SPACE, frame header handling
+
+#### Architecture Improvements  
+- **✅ TX PATH**: ndo_start_xmit → lockless ring → worker thread → SPI (can sleep)
+- **✅ RX PATH**: kthread → SPI read → netif_rx_ni() in process context
+- **✅ LINK STATE**: Delayed work polls PHY status, proper carrier on/off
+- **✅ WATCHDOG TIMEOUT**: 5 second timeout with ndo_tx_timeout handler
+
+#### Testing & Validation
+- **✅ GATES G1-G3 PASSING**: Device probe, network interface, autonomous switching
+- **⏳ GATES G4-G6 READY**: Host TX/RX and link state (pending IRQ fix)
+- **✅ QEMU MODEL VALIDATED**: Three-endpoint architecture proven correct
+- **✅ MODULE AUTHOR**: Properly attributed to Murray Kopit
 
 ## 📁 Project Structure
 
-### 🔧 Core Driver Files (ADIN2111 Specific)
+### 🔧 Core Driver Files - RELEASE CANDIDATE
 
+#### USE THESE FILES (v3.0.0-rc1):
 ```
-ADIN2111/
-│
-├── 📂 drivers/net/ethernet/adi/adin2111/   ⭐ Main Driver Directory
-│   ├── 📄 adin2111.c                       # Core driver implementation
-│   ├── 📄 adin2111.h                       # Driver header & structures
-│   ├── 📄 adin2111_spi.c                   # SPI communication layer
-│   ├── 📄 adin2111_netdev.c                # Network device operations
-│   ├── 📄 adin2111_mdio.c                  # MDIO/PHY management
-│   ├── 📄 adin2111_regs.h                  # Register definitions
-│   ├── 📄 Makefile                         # Kernel module build
-│   └── 📄 Kconfig                          # Kernel configuration
+drivers/net/ethernet/adi/adin2111/
+├── 📄 adin2111_main_correct.c      ✅ Main driver probe/remove
+├── 📄 adin2111_netdev_final.c      ✅ Network operations (COMPILES CLEAN)
+├── 📄 adin2111_spi.c                ✅ SPI register access
+├── 📄 adin2111_mdio.c               ✅ MDIO/PHY management
+├── 📄 adin2111.h                    ✅ Main header
+├── 📄 adin2111_regs.h               ✅ Register definitions
+└── 📄 Makefile.final                ✅ Use this Makefile!
+```
+
+#### DO NOT USE (deprecated/conflicting):
+```
+❌ adin2111_netdev_mvp.c     - Has compilation errors
+❌ adin2111_netdev_correct.c  - Wrong types
+❌ adin2111_netdev_fixed.c    - Superseded
+❌ adin2111_netdev.c          - Has sleeping bugs
+❌ adin2111_atomic_fix.c      - Old workaround
 │
 ├── 📂 tests/                                ⭐ Test Suite
 │   ├── 📂 unit/

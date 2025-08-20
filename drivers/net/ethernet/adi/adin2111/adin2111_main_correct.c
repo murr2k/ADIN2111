@@ -149,6 +149,6 @@ static struct spi_driver adin2111_driver = {
 module_spi_driver(adin2111_driver);
 
 MODULE_DESCRIPTION("ADIN2111 Driver - CORRECT Implementation");
-MODULE_AUTHOR("Analog Devices Inc.");
+MODULE_AUTHOR("Murray Kopit <murr2k@gmail.com>");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("3.0.0");

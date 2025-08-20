@@ -1,0 +1,47 @@
+/dts-v1/;
+
+/ {
+    interrupt-parent = <&intc>;
+    #size-cells = <0x2>;
+    #address-cells = <0x2>;
+    compatible = "linux,dummy-virt";
+
+    chosen {
+        stdout-path = "/pl011@9000000";
+    };
+
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x0 0x40000000 0x0 0x10000000>;
+    };
+
+    intc: interrupt-controller@8000000 {
+        compatible = "arm,gic-400";
+        #interrupt-cells = <0x3>;
+        interrupt-controller;
+        reg = <0x0 0x08000000 0x0 0x00010000>,
+              <0x0 0x08010000 0x0 0x00010000>;
+    };
+
+    pl011@9000000 {
+        compatible = "arm,pl011", "arm,primecell";
+        reg = <0x0 0x09000000 0x0 0x00001000>;
+        interrupts = <0x0 0x1 0x4>;
+    };
+
+    spi@9060000 {
+        compatible = "arm,pl022", "arm,primecell";
+        reg = <0x0 0x09060000 0x0 0x00001000>;
+        interrupts = <0x0 0xa 0x4>;
+        #address-cells = <0x1>;
+        #size-cells = <0x0>;
+        status = "okay";
+        
+        ethernet@0 {
+            compatible = "adi,adin2111";
+            reg = <0x0>;
+            spi-max-frequency = <25000000>;
+            status = "okay";
+        };
+    };
+};

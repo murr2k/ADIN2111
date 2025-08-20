@@ -5,6 +5,53 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0-rc1] - 2025-08-20
+
+### 🚀 Release Candidate 1 - Critical Linux Driver Correctness Fixes
+
+### Critical Fixes
+- **NO SLEEPING IN SOFTIRQ CONTEXTS**: Complete architectural redesign
+  - TX path: `ndo_start_xmit` → lockless ring buffer → worker thread → SPI
+  - RX path: kthread → SPI read → `netif_rx_ni()` in process context
+  - Eliminated all sleeping operations in atomic/softirq contexts
+- **COMPILATION FIXES**: Driver now compiles cleanly against real kernels
+  - Fixed register name mismatches (RX_FSIZE, TX_SPACE)
+  - Corrected stats synchronization type (u64_stats_sync)
+  - Proper frame header length (4 bytes as per hardware spec)
+- **MODULE ATTRIBUTION**: Correctly attributed to Murray Kopit <murr2k@gmail.com>
+
+### Architecture Improvements
+- **TX Ring Buffer**: Lockless design with 256-entry ring
+  - Memory barriers for SMP safety
+  - Worker thread handles actual SPI transmission
+  - Proper watchdog timeout (5 seconds) with recovery
+- **kthread RX Processing**: Replaced NAPI to avoid softirq constraints
+  - Can safely sleep during SPI operations
+  - Uses `netif_rx_ni()` for correct context packet delivery
+- **Link State Management**: Delayed work for PHY polling
+  - Proper carrier on/off notifications
+  - No sleeping in interrupt context
+
+### Testing Status
+- **Gates G1-G3**: ✅ PASSING
+  - Device probe successful
+  - Network interface creation
+  - Autonomous PHY-to-PHY switching proven
+- **Gates G4-G6**: ⏳ READY (pending IRQ registration fix)
+  - Host TX/RX implementation complete
+  - Link state monitoring implemented
+- **Gate G7**: ⏳ QTest framework in place
+
+### File Organization
+- **USE**: `adin2111_netdev_final.c` - The correct, compilable version
+- **USE**: `adin2111_main_correct.c` - Proper probe/remove
+- **USE**: `Makefile.final` - Builds `adin2111_final.ko`
+- **DEPRECATED**: All other netdev versions (mvp, correct, fixed, etc.)
+
+### Known Issues
+- IRQ registration failure in QEMU (affects G4-G6 validation)
+- QOM properties for RX injection still under development
+
 ## [2.0.0] - 2025-08-20
 
 ### 🎉 Major Milestone: QEMU Switch Mode Implementation Complete

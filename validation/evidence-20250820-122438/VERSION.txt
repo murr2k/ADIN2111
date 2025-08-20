@@ -1,0 +1,5 @@
+Capture Date: Wed Aug 20 12:24:48 PDT 2025
+QEMU SHA: c25df57ae8f9fe1c72eee2dab37d76d904ac382e
+QEMU Build: -rwxr-xr-x 1 murr2k murr2k 65365016 Aug 20 11:55 /home/murr2k/qemu/build/qemu-system-arm
+Kernel Version: 
+DTB Checksum: 1d67d336724b7149b2f9beabc1c87bc8  /home/murr2k/projects/ADIN2111/dts/virt-adin2111-fixed.dtb
