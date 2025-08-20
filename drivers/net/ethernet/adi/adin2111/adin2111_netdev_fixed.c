@@ -353,7 +353,7 @@ static const struct net_device_ops adin2111_netdev_ops = {
 };
 
 /* Alternative using tasklet approach */
-static const struct net_device_ops adin2111_netdev_ops_tasklet = {
+static const struct net_device_ops __maybe_unused adin2111_netdev_ops_tasklet = {
 	.ndo_open		= adin2111_open,
 	.ndo_stop		= adin2111_stop,
 	.ndo_start_xmit		= adin2111_start_xmit_tasklet,  /* Tasklet approach */

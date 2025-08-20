@@ -21,6 +21,11 @@
 #include "adin2111_fixed.h"
 #include "adin2111_regs.h"
 
+/* Function prototypes */
+int adin2111_init_tx_queue(struct adin2111_priv *priv);
+void adin2111_cleanup_tx_queue(struct adin2111_priv *priv);
+netdev_tx_t (*adin2111_get_start_xmit(void))(struct sk_buff *, struct net_device *);
+
 /* TX queue management structure */
 struct adin2111_tx_queue {
 	struct sk_buff_head queue;
@@ -46,7 +51,6 @@ struct adin2111_async_tx {
 static void adin2111_spi_complete(void *context)
 {
 	struct adin2111_async_tx *async_tx = context;
-	struct adin2111_priv *priv = async_tx->priv;
 	struct net_device *netdev = async_tx->netdev;
 
 	/* Update statistics */
