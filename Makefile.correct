@@ -1,0 +1,18 @@
+# ADIN2111 CORRECT Driver Makefile
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+obj-m += adin2111_correct.o
+
+adin2111_correct-objs := adin2111_main_correct.o \
+                         adin2111_spi.o \
+                         adin2111_mdio.o \
+                         adin2111_netdev_correct.o
+
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) -f Makefile.correct modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+
+.PHONY: all clean
