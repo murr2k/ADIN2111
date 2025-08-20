@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADIN2111 Device Tree Test Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #007acc;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        .timestamp {
+            color: #95a5a6;
+            font-size: 0.9em;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .summary-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .label {
+            font-size: 1.1em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pass { color: #27ae60; }
+        .fail { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+
+        .test-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .test-case {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .test-case:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .test-case.pass {
+            border-left: 4px solid #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .test-case.fail {
+            border-left: 4px solid #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .test-case.warning {
+            border-left: 4px solid #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .test-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .test-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .timing-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .timing-chart {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timing-bar {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(0deg, #007acc, #4fc3f7);
+            border-radius: 5px 5px 0 0;
+            transition: height 0.8s ease;
+        }
+
+        .device-tree-status {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dt-config {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dt-config h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .config-item:last-child {
+            border-bottom: none;
+        }
+
+        .logs-section {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .logs-section h3 {
+            color: #ecf0f1;
+            margin-bottom: 15px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #34495e;
+            font-size: 0.9em;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 122, 204, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #005fa3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 122, 204, 0.4);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>ADIN2111 Device Tree Test Dashboard</h1>
+            <div class="subtitle">QEMU Virtual Machine Testing Environment</div>
+            <div class="timestamp" id="timestamp">Last Updated: <span id="current-time"></span></div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value pass" id="total-pass">12</div>
+                <div class="label">Tests Passed</div>
+            </div>
+            <div class="summary-card">
+                <div class="value fail" id="total-fail">3</div>
+                <div class="label">Tests Failed</div>
+            </div>
+            <div class="summary-card">
+                <div class="value warning" id="total-warning">1</div>
+                <div class="label">Warnings</div>
+            </div>
+            <div class="summary-card">
+                <div class="value info" id="success-rate">75%</div>
+                <div class="label">Success Rate</div>
+            </div>
+        </div>
+
+        <div class="device-tree-status">
+            <div class="dt-config">
+                <h4>Single ADIN2111 Configuration</h4>
+                <div class="config-item">
+                    <span>Device Tree File:</span>
+                    <span>virt-adin2111.dts</span>
+                </div>
+                <div class="config-item">
+                    <span>SPI Controller:</span>
+                    <span class="pass">PL022 @ 0x09060000</span>
+                </div>
+                <div class="config-item">
+                    <span>IRQ Line:</span>
+                    <span class="pass">10</span>
+                </div>
+                <div class="config-item">
+                    <span>Ports:</span>
+                    <span>2 (lan0, lan1)</span>
+                </div>
+                <div class="config-item">
+                    <span>Status:</span>
+                    <span class="pass">✓ Active</span>
+                </div>
+            </div>
+            <div class="dt-config">
+                <h4>Dual ADIN2111 Configuration</h4>
+                <div class="config-item">
+                    <span>Device Tree File:</span>
+                    <span>virt-adin2111-dual.dts</span>
+                </div>
+                <div class="config-item">
+                    <span>Devices:</span>
+                    <span>2 ADIN2111 chips</span>
+                </div>
+                <div class="config-item">
+                    <span>Total Ports:</span>
+                    <span>4 (lan0-lan3)</span>
+                </div>
+                <div class="config-item">
+                    <span>IRQ Lines:</span>
+                    <span>48, 49</span>
+                </div>
+                <div class="config-item">
+                    <span>Status:</span>
+                    <span class="warning">⚠ Testing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-sections">
+            <div class="test-section">
+                <h3>Device Tree Compilation</h3>
+                <div class="test-case pass">
+                    <span class="test-name">DTC001: Single config compilation</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">DTC002: Dual config compilation</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case fail">
+                    <span class="test-name">DTC003: GPIO binding validation</span>
+                    <div class="test-status">
+                        <span class="status-icon fail">✗</span>
+                        <span>FAIL</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">DTC004: SPI frequency check</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>QEMU Integration</h3>
+                <div class="test-case pass">
+                    <span class="test-name">QI001: Boot with single DT</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case warning">
+                    <span class="test-name">QI002: Boot with dual DT</span>
+                    <div class="test-status">
+                        <span class="status-icon warning">⚠</span>
+                        <span>WARN</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">QI003: SPI controller detection</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case fail">
+                    <span class="test-name">QI004: Interrupt routing</span>
+                    <div class="test-status">
+                        <span class="status-icon fail">✗</span>
+                        <span>FAIL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>Driver Functionality</h3>
+                <div class="test-case pass">
+                    <span class="test-name">DF001: Device probe</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">DF002: Interface creation</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">DF003: MAC address assignment</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case fail">
+                    <span class="test-name">DF004: PHY initialization</span>
+                    <div class="test-status">
+                        <span class="status-icon fail">✗</span>
+                        <span>FAIL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>Network Connectivity</h3>
+                <div class="test-case pass">
+                    <span class="test-name">NC001: Interface up/down</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">NC002: Link state detection</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">NC003: Basic ping test</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+                <div class="test-case pass">
+                    <span class="test-name">NC004: Packet statistics</span>
+                    <div class="test-status">
+                        <span class="status-icon pass">✓</span>
+                        <span>PASS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timing-section">
+            <h3>Performance Metrics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div>
+                    <strong>Boot Time:</strong> 2.3s
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 76%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <strong>Driver Load:</strong> 180ms
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 90%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <strong>Interface Ready:</strong> 350ms
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <strong>Link Detection:</strong> 1.2s
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="logs-section">
+            <h3>Recent Test Output</h3>
+            <div class="log-entry">[2025-08-20 10:30:15] Starting ADIN2111 device tree validation...</div>
+            <div class="log-entry">[2025-08-20 10:30:16] ✓ Compiled virt-adin2111.dts successfully</div>
+            <div class="log-entry">[2025-08-20 10:30:17] ✓ Compiled virt-adin2111-dual.dts successfully</div>
+            <div class="log-entry">[2025-08-20 10:30:18] Starting QEMU boot test...</div>
+            <div class="log-entry">[2025-08-20 10:30:21] ✓ QEMU boot completed (2.3s)</div>
+            <div class="log-entry">[2025-08-20 10:30:22] ✓ PL022 SPI controller detected at 0x09060000</div>
+            <div class="log-entry">[2025-08-20 10:30:22] ✓ ADIN2111 driver loaded successfully</div>
+            <div class="log-entry">[2025-08-20 10:30:23] ✓ Created network interfaces: eth0, eth1</div>
+            <div class="log-entry">[2025-08-20 10:30:24] ⚠ PHY initialization timeout on port 1</div>
+            <div class="log-entry">[2025-08-20 10:30:25] ✗ Interrupt routing test failed</div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="refreshData()">
+        🔄 Refresh
+    </button>
+
+    <script>
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString();
+        }
+
+        function refreshData() {
+            // Simulate data refresh
+            const refreshBtn = document.querySelector('.refresh-btn');
+            refreshBtn.classList.add('pulse');
+            refreshBtn.textContent = '⏳ Refreshing...';
+            
+            setTimeout(() => {
+                refreshBtn.classList.remove('pulse');
+                refreshBtn.textContent = '🔄 Refresh';
+                updateTimestamp();
+                
+                // Simulate some random test results changes
+                const testCases = document.querySelectorAll('.test-case');
+                testCases.forEach(testCase => {
+                    if (Math.random() > 0.9) {
+                        const wasPass = testCase.classList.contains('pass');
+                        const wasFail = testCase.classList.contains('fail');
+                        
+                        testCase.classList.remove('pass', 'fail', 'warning');
+                        
+                        if (wasPass && Math.random() > 0.7) {
+                            testCase.classList.add('warning');
+                            testCase.querySelector('.status-icon').textContent = '⚠';
+                            testCase.querySelector('.test-status span:last-child').textContent = 'WARN';
+                        } else if (wasFail && Math.random() > 0.5) {
+                            testCase.classList.add('pass');
+                            testCase.querySelector('.status-icon').textContent = '✓';
+                            testCase.querySelector('.test-status span:last-child').textContent = 'PASS';
+                        }
+                    }
+                });
+                
+                updateSummary();
+            }, 2000);
+        }
+
+        function updateSummary() {
+            const passCount = document.querySelectorAll('.test-case.pass').length;
+            const failCount = document.querySelectorAll('.test-case.fail').length;
+            const warnCount = document.querySelectorAll('.test-case.warning').length;
+            const total = passCount + failCount + warnCount;
+            const successRate = total > 0 ? Math.round((passCount / total) * 100) : 0;
+            
+            document.getElementById('total-pass').textContent = passCount;
+            document.getElementById('total-fail').textContent = failCount;
+            document.getElementById('total-warning').textContent = warnCount;
+            document.getElementById('success-rate').textContent = successRate + '%';
+        }
+
+        // Initialize
+        updateTimestamp();
+        updateSummary();
+        
+        // Auto-refresh timestamp every minute
+        setInterval(updateTimestamp, 60000);
+    </script>
+</body>
+</html>

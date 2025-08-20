@@ -1,0 +1,259 @@
+Test report generated: logs/test-report-20250819-222844.html
+F-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADIN2111 Test Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007acc;
+        }
+        .header h1 {
+            color: #007acc;
+            margin-bottom: 10px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h2 {
+            color: #333;
+            margin-top: 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .pass { color: #28a745; font-weight: bold; }
+        .fail { color: #dc3545; font-weight: bold; }
+        .warn { color: #ffc107; font-weight: bold; }
+        .log-content {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 ADIN2111 Test Suite Report</h1>
+            <p class="timestamp">Generated on: $(date)</p>
+        </div>
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Build Status</h3>
+                <div class="value" id="build-status">✓</div>
+            </div>
+            <div class="summary-card">
+                <h3>Tests Run</h3>
+                <div class="value" id="tests-run">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Success Rate</h3>
+                <div class="value" id="success-rate">0%</div>
+            </div>
+            <div class="summary-card">
+                <h3>Duration</h3>
+                <div class="value" id="duration">--</div>
+            </div>
+        </div>
+        <div class="test-section">
+            <h2>🔨 Kernel Build</h2>
+            <p>Linux kernel compilation with ADIN2111 driver support</p>
+            <p><strong>Status:</strong> <span class="warn">NOT RUN</span></p>
+            <p>Log file not found: logs/kernel-build.log</p>
+        </div>
+        <div class="test-section">
+            <h2>🏗️ QEMU Build</h2>
+            <p>QEMU build with ADIN2111 device model</p>
+            <p><strong>Status:</strong> <span class="warn">NOT RUN</span></p>
+            <p>Log file not found: logs/qemu-build.log</p>
+        </div>
+        <div class="test-section">
+            <h2>🌳 Device Tree</h2>
+            <p>Device tree compilation for ADIN2111 integration</p>
+            <p><strong>Status:</strong> <span class="warn">NOT RUN</span></p>
+            <p>Log file not found: logs/dtb-build.log</p>
+        </div>
+        <div class="test-section">
+            <h2>🧪 Functional Tests</h2>
+            <p>Functional testing of ADIN2111 device functionality</p>
+            <p><strong>Status:</strong> <span class="pass">COMPLETED</span></p>
+            <h4>Log Output:</h4>
+            <div class="log-content">
+Test log content
+            </div>
+        </div>
+        <div class="test-section">
+            <h2>🔬 QTest Suite</h2>
+            <p>QEMU unit tests for ADIN2111 device model</p>
+            <p><strong>Status:</strong> <span class="warn">NOT RUN</span></p>
+            <p>Log file not found: logs/qtest.log</p>
+        </div>
+        <div class="test-section">
+            <h2>⏱️ Timing Validation</h2>
+            <p>Performance and timing characteristics validation</p>
+            <p><strong>Status:</strong> <span class="fail">FAILED</span></p>
+            <h4>Log Output:</h4>
+            <div class="log-content">
+Detailed log: logs/timing-detailed-20250819-222819.log
+
+
+[0;33mTest 1: Reset Timing Measurement[0m
+Measuring device reset time against datasheet specification...
+[0;32m✓[0m Device Reset Time: PASSED (expected: 47.5-52.5ms, actual: 51.18ms (range: 51.14-51.20ms))
+
+[0;33mTest 2: Power-On Timing Measurement[0m
+Measuring power-on time against datasheet specification...
+[0;32m✓[0m Power-On Time: PASSED (expected: 40.85-45.15ms, actual: 42.16ms)
+
+[0;33mTest 3: PHY RX Latency Measurement[0m
+Measuring PHY receive latency against datasheet specification...
+[0;31m✗[0m PHY RX Latency: FAILED (expected: 5.76-7.04µs, actual: 86.76µs)
+
+[0;33mTest 4: PHY TX Latency Measurement[0m
+Measuring PHY transmit latency against datasheet specification...
+[0;31m✗[0m PHY TX Latency: FAILED (expected: 2.88-3.52µs, actual: 77.57µs)
+
+[0;33mTest 5: Switch Latency Measurement[0m
+Measuring switch forwarding latency against datasheet specification...
+[0;31m✗[0m Switch Latency: FAILED (expected: 11.34-13.86µs, actual: 85.19µs)
+
+[0;33mTest 6: SPI Communication Timing[0m
+Measuring SPI transaction timing...
+[0;31m✗[0m SPI Transaction Time: FAILED (expected: &lt;10.0µs, actual: 76.66µs)
+
+[0;33mTest 7: Link Detection Timing[0m
+Measuring link detection and establishment timing...
+[0;32m✓[0m Link Detection Time: PASSED (expected: 950-1050ms, actual: 1001ms)
+
+[0;33mTest 8: Timing Consistency[0m
+Testing timing consistency and jitter...
+[0;32m✓[0m Timing Consistency (Reset): PASSED (expected: σ&lt;2.51ms, actual: σ=0.06ms)
+
+Test artifacts generated:
+  - Detailed log: logs/timing-detailed-20250819-222819.log
+  - JSON results: logs/timing-test-results.json
+
+====================================================
+[0;34m📊 ADIN2111 Timing Validation Summary[0m
+====================================================
+Total Tests: 8
+Passed: [0;32m4[0m
+Failed: [0;31m4[0m
+Datasheet Compliance: [0;31mFAIL[0m
+End time: 2025-08-19 22:28:26
+
+[0;31m❌ Some timing tests failed![0m
+[0;33m⚠️  Please review timing implementation[0m
+            </div>
+        </div>
+        <div class="test-section">
+            <h2>🚀 QEMU Boot</h2>
+            <p>QEMU system boot with ADIN2111 device</p>
+            <p><strong>Status:</strong> <span class="warn">NOT RUN</span></p>
+            <p>Log file not found: logs/qemu-boot.log</p>
+        </div>
+        <div class="test-section">
+            <h2>🖥️ System Information</h2>
+            <div class="log-content">
+Hostname: DESKTOP-MALMQAC
+OS: Linux DESKTOP-MALMQAC 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+CPU: 8 cores
+Memory: 31Gi
+Disk Space: 733G
+Build Time: Tue Aug 19 22:28:44 PDT 2025
+
+Environment Variables:
+ARCH: arm
+CROSS_COMPILE: arm-linux-gnueabihf-
+JOBS: 8
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by ADIN2111 Test Suite Makefile</p>
+            <p>Report timestamp: $(date)</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple JavaScript to update summary cards
+        document.addEventListener('DOMContentLoaded', function() {
+            // Count test sections and estimate success rate
+            const testSections = document.querySelectorAll('.test-section');
+            const testCount = Math.max(0, testSections.length - 2); // Exclude system info
+            
+            document.getElementById('tests-run').textContent = testCount;
+            
+            // Calculate rough success rate based on log content
+            let passCount = 0;
+            testSections.forEach(section => {
+                const statusSpan = section.querySelector('.pass');
+                if (statusSpan) passCount++;
+            });
+            
+            const successRate = testCount > 0 ? Math.round((passCount / testCount) * 100) : 0;
+            document.getElementById('success-rate').textContent = successRate + '%';
+            
+            // Mock duration - in real implementation this would be calculated
+            document.getElementById('duration').textContent = '~5min';
+        });
+    </script>
+</body>
+</html>

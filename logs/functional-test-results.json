@@ -1,7 +1,7 @@
 {
   "test_suite": "ADIN2111 Functional Tests",
-  "timestamp": "2025-08-19T21:48:20-07:00",
-  "duration": 3,
+  "timestamp": "2025-08-19T22:25:11-07:00",
+  "duration": 4,
   "total_tests": 8,
   "passed": 7,
   "failed": 1,

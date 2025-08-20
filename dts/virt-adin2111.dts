@@ -1,0 +1,76 @@
+/dts-v1/;
+
+/ {
+    compatible = "linux,dummy-virt";
+    #address-cells = <1>;
+    #size-cells = <1>;
+    
+    chosen {
+        bootargs = "console=ttyAMA0";
+    };
+    
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x40000000 0x10000000>; /* 256MB */
+    };
+    
+    soc {
+        compatible = "simple-bus";
+        #address-cells = <1>;
+        #size-cells = <1>;
+        ranges;
+        
+        spi@9060000 {
+            compatible = "arm,pl022", "arm,primecell";
+            reg = <0x09060000 0x1000>;
+            interrupts = <0 10 4>;
+            clocks = <&apb_pclk>;
+            clock-names = "apb_pclk";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+            
+            adin2111: ethernet@0 {
+                compatible = "adi,adin2111";
+                reg = <0>; /* CS0 */
+                spi-max-frequency = <25000000>;
+                spi-cpha;
+                spi-cpol;
+                
+                interrupt-parent = <&intc>;
+                interrupts = <0 48 4>; /* SPI 48, level high */
+                
+                local-mac-address = [52 54 00 12 34 56];
+                
+                mdio {
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    
+                    phy0: ethernet-phy@0 {
+                        reg = <0>;
+                        compatible = "ethernet-phy-ieee802.3-c22";
+                    };
+                    
+                    phy1: ethernet-phy@1 {
+                        reg = <1>;
+                        compatible = "ethernet-phy-ieee802.3-c22";
+                    };
+                };
+            };
+        };
+        
+        intc: interrupt-controller@8000000 {
+            compatible = "arm,gic-400";
+            #interrupt-cells = <3>;
+            interrupt-controller;
+            reg = <0x08000000 0x10000>,
+                  <0x08010000 0x10000>;
+        };
+    };
+    
+    apb_pclk: apb_pclk {
+        compatible = "fixed-clock";
+        #clock-cells = <0>;
+        clock-frequency = <24000000>;
+    };
+};
