@@ -116,6 +116,8 @@ struct adin2111_priv {
 
 	/* Atomic context fix configuration */
 	bool use_deferred_tx;		/* Enable deferred TX processing */
+	atomic_t tx_pending;		/* Count of pending TX operations */
+	struct adin2111_tx_queue *tx_queue;  /* TX queue for workqueue approach (allocated separately) */
 };
 
 /* Function prototypes */

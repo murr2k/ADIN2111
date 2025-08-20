@@ -15,7 +15,8 @@
 #include <linux/spi/spi.h>
 #include <linux/workqueue.h>
 #include <linux/spinlock.h>
-#include "adin2111.h"
+#include "adin2111_fixed.h"
+#include "adin2111_regs.h"
 
 /* TX queue management structure */
 struct adin2111_tx_queue {
@@ -24,6 +25,18 @@ struct adin2111_tx_queue {
 	struct adin2111_priv *priv;
 	spinlock_t lock;
 	bool stopped;
+};
+
+/* Async TX context structure */
+struct adin2111_async_tx {
+	struct adin2111_priv *priv;
+	struct net_device *netdev;
+	struct sk_buff *skb;
+	u8 *tx_buf;
+	size_t len;
+	int status;
+	struct spi_message msg;
+	struct spi_transfer xfer;
 };
 
 /* Async SPI completion callback */

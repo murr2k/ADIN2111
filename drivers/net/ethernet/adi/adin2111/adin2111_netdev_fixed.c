@@ -13,7 +13,7 @@
 #include <linux/module.h>
 #include <linux/bitfield.h>
 
-#include "adin2111.h"
+#include "adin2111_fixed.h"
 #include "adin2111_regs.h"
 
 /* External function declarations */

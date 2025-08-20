@@ -120,6 +120,10 @@
 #define ADIN2111_FRAME_HEADER_LEN_MASK	GENMASK(10, 0)
 #define ADIN2111_FRAME_HEADER_PORT_MASK	GENMASK(15, 14)
 
+/* TX Queue limits for atomic context fix */
+#define ADIN2111_TX_QUEUE_LIMIT		32	/* Max packets in queue */
+#define ADIN2111_TX_QUEUE_LOW		8	/* Low watermark to wake queue */
+
 /* TX Space Register */
 #define ADIN2111_TX_SPACE		0x32
 
