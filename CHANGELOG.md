@@ -5,6 +5,29 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-08-20
+
+### Added
+- **SSI Bus Integration Complete**: Successfully added PL022 SPI controller to QEMU virt machine
+  - Memory mapped at 0x09060000 with IRQ 10
+  - Full device tree support with proper SPI node
+  - ADIN2111 device can now be instantiated without bus errors
+  
+- **Test Scripts for SSI Validation**:
+  - `test-ssi-integration.sh`: Comprehensive SSI bus testing
+  - `test-driver-probe.sh`: Driver probe debugging
+  - Device tree files for ADIN2111 on SPI bus
+
+### Fixed
+- **Critical SSI Bus Issue Resolved**: "No 'SSI' bus found for device 'adin2111'"
+  - Modified `/home/murr2k/qemu/hw/arm/virt.c` to include PL022 controller
+  - Updated `/home/murr2k/qemu/include/hw/arm/virt.h` with VIRT_SPI enum
+  - QEMU successfully rebuilt with SSI support
+
+### Changed
+- **Project Progress**: Updated to 95% complete (9/10 phases)
+- **QEMU Integration**: Device now fully instantiable with proper bus infrastructure
+
 ## [1.2.0] - 2025-08-20
 
 ### Added

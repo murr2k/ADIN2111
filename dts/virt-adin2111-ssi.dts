@@ -1,0 +1,66 @@
+/dts-v1/;
+
+/ {
+    interrupt-parent = <0x8001>;
+    #size-cells = <0x02>;
+    #address-cells = <0x02>;
+    compatible = "linux,dummy-virt";
+
+    pl022@9060000 {
+        compatible = "arm,pl022", "arm,primecell";
+        reg = <0x00 0x09060000 0x00 0x00001000>;
+        interrupts = <0x00 0x0a 0x04>;
+        clocks = <0x8000 0x8000>;
+        clock-names = "sspclk", "apb_pclk";
+        #address-cells = <0x01>;
+        #size-cells = <0x00>;
+        num-cs = <0x01>;
+        status = "okay";
+        
+        adin2111@0 {
+            compatible = "adi,adin2111";
+            reg = <0x00>;
+            spi-max-frequency = <25000000>;
+            interrupts = <0x00 0x0b 0x04>;
+            reset-gpios = <0x8002 0x00 0x00>;
+            status = "okay";
+            
+            /* PHY configuration */
+            phy-mode = "internal";
+            
+            /* Switch mode configuration */
+            adi,switch-mode;
+            
+            /* Port configuration */
+            ports {
+                #address-cells = <0x01>;
+                #size-cells = <0x00>;
+                
+                port@0 {
+                    reg = <0x00>;
+                    label = "eth0";
+                    phy-handle = <&phy0>;
+                };
+                
+                port@1 {
+                    reg = <0x01>;
+                    label = "eth1";
+                    phy-handle = <&phy1>;
+                };
+            };
+            
+            mdio {
+                #address-cells = <0x01>;
+                #size-cells = <0x00>;
+                
+                phy0: ethernet-phy@0 {
+                    reg = <0x00>;
+                };
+                
+                phy1: ethernet-phy@1 {
+                    reg = <0x01>;
+                };
+            };
+        };
+    };
+};
