@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0+
+# ADIN2111 MVP Driver Makefile
+
+# Out-of-tree build
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+# Module name
+obj-m += adin2111_mvp.o
+
+# Object files
+adin2111_mvp-objs := adin2111_main_mvp.o \
+                      adin2111_spi.o \
+                      adin2111_mdio.o \
+                      adin2111_netdev_mvp.o \
+                      adin2111_link.o
+
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) -f Makefile.mvp modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+	rm -f *.o *.ko *.mod.c *.mod modules.order Module.symvers
+
+install:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
+
+.PHONY: all clean install

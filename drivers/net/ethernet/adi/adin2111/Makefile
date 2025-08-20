@@ -28,8 +28,8 @@ obj-m += adin2111_driver.o
 adin2111_driver-objs := adin2111.o \
                         adin2111_spi.o \
                         adin2111_mdio.o \
-                        adin2111_netdev_fixed.o \
-                        adin2111_atomic_fix.o
+                        adin2111_netdev_mvp.o \
+                        adin2111_link.o
 
 # Optional debug flags
 ccflags-$(CONFIG_ADIN2111_DEBUG) += -DDEBUG

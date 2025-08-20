@@ -84,6 +84,7 @@ struct adin2111_priv {
 
 	/* Work and interrupts */
 	struct work_struct irq_work;
+	struct delayed_work link_work;
 	struct workqueue_struct *wq;
 	int irq;
 	u32 irq_mask;
