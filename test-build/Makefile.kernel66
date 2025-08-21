@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-2.0+
+# ADIN2111 Driver - Kernel 6.6+ Compatible Version
+# Fixes netif_rx_ni() removal and missing register definitions
+
+# For out-of-tree builds
+ifeq ($(KERNELRELEASE),)
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+
+.PHONY: all clean
+
+else
+# For in-kernel builds
+
+obj-m += adin2111_kernel66.o
+
+adin2111_kernel66-objs := adin2111_main_correct.o \
+                          adin2111_netdev_kernel66.o \
+                          adin2111_spi.o \
+                          adin2111_mdio.o
+
+endif

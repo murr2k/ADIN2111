@@ -1,0 +1,22 @@
+# Makefile for ADIN2111 test module
+
+obj-m += adin2111_test.o
+obj-m += adin2111_driver.o
+
+adin2111_driver-objs := drivers/net/ethernet/adi/adin2111/adin2111.o \
+                        drivers/net/ethernet/adi/adin2111/adin2111_spi.o \
+                        drivers/net/ethernet/adi/adin2111/adin2111_mdio.o \
+                        drivers/net/ethernet/adi/adin2111/adin2111_netdev.o
+
+KERNEL_DIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KERNEL_DIR) M=$(PWD) clean
+
+# For cross-compilation
+arm:
+	$(MAKE) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -C $(KERNEL_DIR) M=$(PWD) modules

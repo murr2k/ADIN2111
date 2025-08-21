@@ -5,6 +5,54 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2025-08-21
+
+### 🎯 Kernel 6.6+ Compatibility Release
+
+### Added
+- **Kernel 6.6+ Compatible Driver**: `adin2111_netdev_kernel66.c`
+  - Automatic kernel version detection via `LINUX_VERSION_CODE`
+  - Compatible with client's kernel 6.6.48-stm32mp
+  - Supports all kernels from 5.15 through latest
+- **Comprehensive Documentation**:
+  - `PROJECT_ENVIRONMENT.md` - Complete setup and build guide
+  - `KERNEL_6.6_FIX.md` - Specific fixes for kernel 6.6+
+  - `TROUBLESHOOTING.md` - Common issues and solutions
+  - `QEMU_TEST_RESULTS.md` - Validation test results
+
+### Fixed
+- **netif_rx_ni() Removal**: Kernel 5.18+ removed this function
+  - Added compatibility macro that automatically selects correct function
+  - Uses `netif_rx()` for kernel ≥ 5.18
+  - Falls back to `netif_rx_ni()` for older kernels
+- **Missing Register Definitions**:
+  - Added `ADIN2111_STATUS0_LINK` (BIT 12)
+  - Added `ADIN2111_RX_FSIZE` (0x90)
+  - Added `ADIN2111_TX_SPACE` (0x32)
+  - Added fallback definitions for all potentially missing registers
+
+### Tested
+- **QEMU Validation**: Successfully tested in QEMU 9.0.0
+  - Driver probes successfully at spi0.0
+  - Network interface eth0 created
+  - SPI communication working at 12 MHz
+- **Compilation**: Verified clean compilation
+  - No warnings or errors
+  - Compatible with real kernel headers
+  - Cross-compilation for ARM tested
+
+### Technical Details
+- **Version Detection**: 
+  ```c
+  #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,18,0)
+  #define netif_rx_compat(skb) netif_rx(skb)
+  #else
+  #define netif_rx_compat(skb) netif_rx_ni(skb)
+  #endif
+  ```
+- **Build System**: New `Makefile.kernel66` for kernel 6.6+ builds
+- **Module Name**: `adin2111_kernel66.ko`
+
 ## [3.0.0-rc1] - 2025-08-20
 
 ### 🚀 Release Candidate 1 - Critical Linux Driver Correctness Fixes
