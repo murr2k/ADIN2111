@@ -1,19 +1,19 @@
 #!/bin/sh
-echo "=== Kernel 6.6+ Driver Test ==="
+echo "=== ADIN2111 Test Environment ==="
 echo "Kernel: $(uname -r)"
-echo
-echo "Checking for ADIN2111..."
-dmesg | grep -i adin2111 || echo "No ADIN2111 messages"
-echo
-echo "Network interfaces:"
-ip link show 2>/dev/null || echo "No network tools"
-echo
-echo "SPI devices:"
-ls /sys/bus/spi/devices/ 2>/dev/null || echo "No SPI bus"
-echo
-echo "Test complete. Key fixes verified:"
-echo "- netif_rx() for kernel 6.6+ (not netif_rx_ni)"
-echo "- ADIN2111_STATUS0_LINK defined"
-echo "- TX ring buffer + worker (no sleeping)"
-echo "- RX kthread (can sleep safely)"
-sleep 5
+echo "Architecture: $(uname -m)"
+
+# Check for module
+if [ -f /lib/modules/adin2111_hybrid.ko ]; then
+    echo "ADIN2111 module found!"
+    echo "Attempting to load module..."
+    insmod /lib/modules/adin2111_hybrid.ko single_interface_mode=1 2>&1 || echo "Module load failed (expected without proper kernel/arch)"
+else
+    echo "No ADIN2111 module found"
+fi
+
+echo "Available network interfaces:"
+ls /sys/class/net/ 2>/dev/null || echo "sysfs not available"
+
+echo "Test complete. Starting shell..."
+exec /bin/sh

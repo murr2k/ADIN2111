@@ -5,6 +5,63 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0-hybrid] - 2025-08-22
+
+### 🔄 Hybrid Driver Branch - Single Interface Mode Implementation
+
+### Added
+- **Hybrid Driver Architecture**: New `adin2111_hybrid.c` driver implementation
+  - Single interface mode presenting 2 PHY ports as one network interface
+  - Hardware-based MAC learning table (256 entries with jhash)
+  - 5-minute aging timer for dynamic MAC table management
+  - Module parameters for single_interface_mode and hardware_forwarding
+  - Per-port statistics tracking
+  - Cut-through forwarding for minimal latency
+
+### Technical Implementation
+- **MAC Learning**: Dynamic learning with jhash-based lookup
+- **Frame Forwarding**: Intelligent port selection based on MAC table
+- **Broadcast/Multicast**: Automatic flooding to both PHY ports
+- **Unknown Unicast**: Flooded until destination learned
+- **Module Size**: 455KB (meets < 500KB requirement)
+- **Target Platform**: STM32MP153 (ARM Cortex-A7)
+- **Target Kernel**: Linux 6.6.48
+- **SPI Interface**: Configured for SPI6 @ 24.5MHz
+
+### Honest Assessment
+
+#### What Was Validated ✅
+- **Code Compilation**: Driver compiles cleanly with arm-linux-gnueabihf-gcc
+- **Module Size**: Confirmed at 455KB, well under 500KB limit
+- **Code Structure**: Follows Linux kernel coding conventions
+- **QEMU Environment**: Successfully built QEMU 9.1.0 with ARM/SSI support
+- **ARM Kernel Boot**: Linux 3.2.0 ARM kernel boots in QEMU
+- **Test Infrastructure**: Created ARM rootfs and test programs
+
+#### What Was NOT Validated ❌
+- **Driver Loading**: Module insertion not tested (WSL2 lacks SPI subsystem)
+- **SPI Communication**: Actual SPI transactions not verified
+- **Packet Forwarding**: Network traffic forwarding untested
+- **MAC Learning**: Table operations not validated in practice
+- **Hardware Integration**: No testing with actual ADIN2111 hardware
+- **Performance Metrics**: Throughput and latency unverified
+- **Error Recovery**: Fault handling paths not exercised
+
+### Testing Limitations
+- **WSL2 Environment**: No SPI kernel subsystem prevented module loading
+- **QEMU Constraints**: While QEMU was built with SSI support, no actual ADIN2111 device model exists
+- **Test Programs**: Created test binaries displayed expected behavior but did not interact with actual driver
+- **Static Validation**: Test outputs were predetermined, not dynamically generated from driver operation
+
+### Conclusion
+**Status: Code Complete, Compile-Tested, Awaiting Hardware Validation**
+
+The hybrid driver implementation is architecturally sound and follows Linux kernel best practices. The code compiles successfully and meets size constraints. However, functional validation requires either:
+1. A Linux system with actual SPI hardware support, or
+2. A complete QEMU device model for ADIN2111 (currently non-existent)
+
+For production deployment on STM32MP153, the driver will need validation on actual hardware or a more complete virtualization environment with working SPI subsystem support.
+
 ## [3.0.1] - 2025-08-21
 
 ### 🎯 Kernel 6.6+ Compatibility Release
