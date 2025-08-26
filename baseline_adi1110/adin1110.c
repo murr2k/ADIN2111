@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-/* ADIN2111 2-Port Ethernet Switch with Integrated 10BASE-T1L PHY
- * Based on ADIN1110 driver from Analog Devices
+/* ADIN1110 Low Power 10BASE-T1L Ethernet MAC-PHY
+ * ADIN2111 2-Port Ethernet Switch with Integrated 10BASE-T1L PHY
  *
  * Copyright 2021 Analog Devices Inc.
- * Copyright 2025 - Enhanced for production use
  */
 
 #include <linux/bitfield.h>
@@ -28,15 +27,6 @@
 #include <net/switchdev.h>
 
 #include <linux/unaligned.h>
-
-/* Module parameters */
-static bool single_interface_mode = false;
-module_param(single_interface_mode, bool, 0644);
-MODULE_PARM_DESC(single_interface_mode, "Enable single interface mode (both ports as one interface)");
-
-static bool hardware_forwarding = true;
-module_param(hardware_forwarding, bool, 0644);
-MODULE_PARM_DESC(hardware_forwarding, "Enable hardware forwarding between ports");
 
 #define ADIN1110_PHY_ID				0x1
 
@@ -114,11 +104,6 @@ MODULE_PARM_DESC(hardware_forwarding, "Enable hardware forwarding between ports"
 
 #define ADIN1110_PHY_ID_VAL			0x0283BC91
 #define ADIN2111_PHY_ID_VAL			0x0283BCA1
-#define ADIN2111_DEVICE_ID_VAL			0x0283
-
-/* Device ID register */
-#define ADIN2111_DEVID				0x00
-#define ADIN2111_DEVID_MASK			GENMASK(15, 0)
 
 #define ADIN_MAC_MAX_PORTS			2
 #define ADIN_MAC_MAX_ADDR_SLOTS			16
@@ -172,7 +157,6 @@ struct adin1110_priv {
 	u32				tx_space;
 	u32				irq_mask;
 	bool				forwarding;
-	bool				single_interface_mode; /* Single interface mode */
 	int				irq;
 	struct adin1110_port_priv	*ports[ADIN_MAC_MAX_PORTS];
 	char				mii_bus_name[MII_BUS_ID_SIZE];
@@ -421,25 +405,8 @@ static int adin1110_write_fifo(struct adin1110_port_priv *port_priv,
 		header_len++;
 	}
 
-	/* Configure frame header with port selection */
-	if (priv->single_interface_mode && priv->cfg->id == ADIN2111_MAC) {
-		/* In single interface mode, use MAC learning or flooding */
-		struct ethhdr *eth = (struct ethhdr *)txb->data;
-		u16 port_bits = 0;
-		
-		if (is_multicast_ether_addr(eth->h_dest)) {
-			/* Multicast/broadcast - send to both PHY ports */
-			port_bits = 0x3; /* Both P1 and P2 */
-		} else {
-			/* For unicast, could implement MAC learning table lookup */
-			/* For now, flood unknown unicast to both ports */
-			port_bits = 0x3; /* Both P1 and P2 */
-		}
-		frame_header = cpu_to_be16((port_bits << 12) | (txb->len & 0xFFF));
-	} else {
-		/* Standard mode - send to specific port */
-		frame_header = cpu_to_be16(((port_priv->nr + 1) << 12) | (txb->len & 0xFFF));
-	}
+	/* mention the port on which to send the frame in the frame header */
+	frame_header = cpu_to_be16(port_priv->nr);
 	memcpy(&priv->data[header_len], &frame_header,
 	       ADIN1110_FRAME_HEADER_LEN);
 
@@ -1140,25 +1107,6 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 		spi_bus_unlock(priv->spidev->controller);
 	}
 
-	/* First check device ID register (0x00) for ADIN2111 */
-	if (priv->cfg->id == ADIN2111_MAC) {
-		ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-		if (ret < 0) {
-			dev_err(&priv->spidev->dev, "Failed to read device ID: %d\n", ret);
-			return ret;
-		}
-
-		val &= ADIN2111_DEVID_MASK;
-		if (val != ADIN2111_DEVICE_ID_VAL) {
-			dev_err(&priv->spidev->dev, "Device ID expected: 0x%04x, read: 0x%04x\n",
-				ADIN2111_DEVICE_ID_VAL, val);
-			dev_err(&priv->spidev->dev, "Check SPI connection and power\n");
-			return -ENODEV;
-		}
-		dev_info(&priv->spidev->dev, "ADIN2111 detected, ID: 0x%04x\n", val);
-	}
-
-	/* Then check PHY ID for compatibility */
 	ret = adin1110_read_reg(priv, ADIN1110_PHY_ID, &val);
 	if (ret < 0)
 		return ret;
@@ -1726,55 +1674,6 @@ static int adin1110_probe(struct spi_device *spi)
 	ret = adin1110_write_reg(priv, ADIN1110_RESET, ADIN1110_SWRESET);
 	if (ret < 0)
 		return ret;
-
-	/* Wait for reset to complete */
-	fsleep(10000);
-
-	/* Configure device based on module parameters */
-	if (priv->cfg->id == ADIN2111_MAC) {
-		u32 config_val = 0;
-
-		/* Enable CONFIG1 sync */
-		ret = adin1110_write_reg(priv, ADIN1110_CONFIG1, ADIN1110_CONFIG1_SYNC);
-		if (ret < 0)
-			return ret;
-
-		priv->single_interface_mode = single_interface_mode;
-
-		if (single_interface_mode) {
-			dev_info(dev, "Configuring ADIN2111 in single interface mode\n");
-			
-			/* Enable hardware forwarding between ports if requested */
-			if (hardware_forwarding) {
-				config_val = ADIN2111_PORT_CUT_THRU_EN;
-				dev_info(dev, "Hardware forwarding enabled\n");
-			}
-			
-			/* Forward unknown unicast to host */
-			config_val |= ADIN1110_FWD_UNK2HOST | ADIN2111_P2_FWD_UNK2HOST;
-		} else {
-			dev_info(dev, "Configuring ADIN2111 in dual interface mode\n");
-			/* Standard dual port mode */
-			config_val = ADIN1110_FWD_UNK2HOST | ADIN2111_P2_FWD_UNK2HOST;
-		}
-
-		if (priv->append_crc)
-			config_val |= ADIN1110_CRC_APPEND;
-
-		ret = adin1110_write_reg(priv, ADIN1110_CONFIG2, config_val);
-		if (ret < 0)
-			return ret;
-	} else {
-		/* ADIN1110 configuration */
-		u32 config_val = ADIN1110_FWD_UNK2HOST;
-		
-		if (priv->append_crc)
-			config_val |= ADIN1110_CRC_APPEND;
-			
-		ret = adin1110_write_reg(priv, ADIN1110_CONFIG2, config_val);
-		if (ret < 0)
-			return ret;
-	}
 
 	ret = adin1110_register_mdiobus(priv, dev);
 	if (ret < 0) {

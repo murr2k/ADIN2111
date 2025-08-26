@@ -22,19 +22,15 @@ else
 # In-tree/in-kernel build settings
 
 # Build as module when CONFIG_ADIN2111 is set, or always for out-of-tree builds
-obj-m += adin2111_driver.o
+obj-m += adin2111.o
 
-# The module is composed of these object files
-adin2111_driver-objs := adin2111.o \
-                        adin2111_spi.o \
-                        adin2111_mdio.o \
-                        adin2111_netdev_mvp.o \
-                        adin2111_link.o
+# Single unified driver based on ADI baseline
+# No additional object files needed - all in one file
 
 # Optional debug flags
 ccflags-$(CONFIG_ADIN2111_DEBUG) += -DDEBUG
 
 # For in-tree builds
-obj-$(CONFIG_ADIN2111) += adin2111_driver.o
+obj-$(CONFIG_ADIN2111) += adin2111.o
 
 endif
