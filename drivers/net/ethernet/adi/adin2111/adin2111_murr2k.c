@@ -27,7 +27,7 @@
 
 #include <net/switchdev.h>
 
-#include <asm/unaligned.h>
+#include <linux/unaligned.h>
 
 /* Module parameters */
 static bool single_interface_mode = false;
@@ -372,8 +372,7 @@ static int adin1110_read_fifo(struct adin1110_port_priv *port_priv)
 
 	if ((port_priv->flags & IFF_ALLMULTI && rxb->pkt_type == PACKET_MULTICAST) ||
 	    (port_priv->flags & IFF_BROADCAST && rxb->pkt_type == PACKET_BROADCAST))
-		/* offload_fwd_mark not available in older kernels */
-		/* rxb->offload_fwd_mark = port_priv->priv->forwarding; */
+		rxb->offload_fwd_mark = port_priv->priv->forwarding;
 
 	netif_rx(rxb);
 
@@ -1133,41 +1132,10 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 		fsleep(10000);
 		gpiod_set_value(reset_gpio, 0);
 
-		/* Poll for device ready after hardware reset */
-		if (priv->cfg->id == ADIN2111_MAC) {
-			int poll_count;
-			bool device_ready = false;
-			
-			for (poll_count = 0; poll_count < 20; poll_count++) {
-				u32 val;
-				
-				/* Wait 10ms before each attempt */
-				fsleep(10000);
-				
-				/* Try to read device ID register */
-				ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-				if (ret == 0) {
-					val &= ADIN2111_DEVID_MASK;
-					if (val == ADIN2111_DEVICE_ID_VAL) {
-						device_ready = true;
-						dev_info(&priv->spidev->dev, 
-							"Device ready after HW reset: %d ms\n", 
-							(poll_count + 1) * 10);
-						break;
-					}
-				}
-			}
-			
-			if (!device_ready) {
-				spi_bus_unlock(priv->spidev->controller);
-				dev_err(&priv->spidev->dev, 
-					"Device failed to respond after HW reset (200ms timeout)\n");
-				return -ETIMEDOUT;
-			}
-		} else {
-			/* For ADIN1110, use documented 90ms delay */
-			fsleep(90000);
-		}
+		/* Need to wait 90 ms before interacting with
+		 * the MAC after a HW reset.
+		 */
+		fsleep(90000);
 
 		spi_bus_unlock(priv->spidev->controller);
 	}
@@ -1683,8 +1651,7 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 		netdev->netdev_ops = &adin1110_netdev_ops;
 		netdev->ethtool_ops = &adin1110_ethtool_ops;
 		netdev->priv_flags |= IFF_UNICAST_FLT;
-		/* netns_local not available in older kernels */
-		/* netdev->netns_local = true; */
+		netdev->netns_local = true;
 
 		port_priv->phydev = get_phy_device(priv->mii_bus, i + 1, false);
 		if (IS_ERR(port_priv->phydev)) {
@@ -1760,46 +1727,8 @@ static int adin1110_probe(struct spi_device *spi)
 	if (ret < 0)
 		return ret;
 
-	/* Poll for device ready - check if we can read valid device ID */
-	if (priv->cfg->id == ADIN2111_MAC) {
-		int poll_count;
-		bool device_ready = false;
-		
-		for (poll_count = 0; poll_count < 20; poll_count++) {
-			u32 val;
-			
-			/* Wait 10ms before each attempt */
-			fsleep(10000);
-			
-			/* Try to read device ID register */
-			ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-			if (ret == 0) {
-				val &= ADIN2111_DEVID_MASK;
-				if (val == ADIN2111_DEVICE_ID_VAL) {
-					device_ready = true;
-					dev_info(&priv->spidev->dev, 
-						"Device ready after %d ms\n", 
-						(poll_count + 1) * 10);
-					break;
-				}
-			}
-			
-			/* Device not ready yet, continue polling */
-			if (poll_count == 9) {
-				dev_warn(&priv->spidev->dev, 
-					"Device not ready after 100ms, continuing...\n");
-			}
-		}
-		
-		if (!device_ready) {
-			dev_err(&priv->spidev->dev, 
-				"Device failed to become ready after 200ms (20 attempts)\n");
-			return -ETIMEDOUT;
-		}
-	} else {
-		/* For ADIN1110, use conservative fixed delay */
-		fsleep(90000);
-	}
+	/* Wait for reset to complete */
+	fsleep(10000);
 
 	/* Configure device based on module parameters */
 	if (priv->cfg->id == ADIN2111_MAC) {
@@ -1904,7 +1833,6 @@ static void __exit adin1110_exit(void)
 module_init(adin1110_driver_init);
 module_exit(adin1110_exit);
 
-MODULE_DESCRIPTION("ADIN2111 Dual-Port 10BASE-T1L Ethernet Switch Driver");
+MODULE_DESCRIPTION("ADIN1110 Network driver");
 MODULE_AUTHOR("Alexandru Tachici <alexandru.tachici@analog.com>");
-MODULE_AUTHOR("Murray Kopit <murr2k@gmail.com>");
 MODULE_LICENSE("Dual BSD/GPL");
