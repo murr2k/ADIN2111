@@ -5,6 +5,28 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.4] - 2025-08-26
+
+### Critical Lockup Fix
+
+### Fixed
+- **SPI Bus Deadlock**: Fixed system lockup during module load
+  - Root cause: `spi_bus_lock()` was held while attempting SPI reads during device polling
+  - Solution: Moved `spi_bus_unlock()` to immediately after hardware reset pulse
+  - Impact: Module now loads without locking up the system
+  
+### Added
+- **Debug Messages**: Comprehensive initialization debugging
+  - "ADIN2111: Probe starting for device..."
+  - "ADIN2111: Hardware reset complete, SPI bus unlocked"
+  - "ADIN2111: Polling for device ready..."
+  - Helps diagnose any remaining initialization issues
+
+### Client Report
+- **Issue**: "modprobe adin2111 single_interface_mode=1 locks up"
+- **Status**: FIXED in v3.0.4
+- **Testing**: Ready for client verification on STM32MP153
+
 ## [3.0.3] - 2025-08-26
 
 ### Production-Ready Driver Based on ADI Baseline

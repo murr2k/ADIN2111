@@ -1124,8 +1124,9 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 	reset_gpio = devm_gpiod_get_optional(&priv->spidev->dev, "reset",
 					     GPIOD_OUT_LOW);
 	if (reset_gpio) {
+		dev_info(&priv->spidev->dev, "ADIN2111: Hardware reset GPIO found, resetting device\n");
 		/* MISO pin is used for internal configuration, can't have
-		 * anyone else disturbing the SDO line.
+		 * anyone else disturbing the SDO line during reset pulse.
 		 */
 		spi_bus_lock(priv->spidev->controller);
 
@@ -1133,8 +1134,14 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 		fsleep(10000);
 		gpiod_set_value(reset_gpio, 0);
 
+		/* Must unlock SPI bus before attempting any SPI reads */
+		spi_bus_unlock(priv->spidev->controller);
+		
+		dev_info(&priv->spidev->dev, "ADIN2111: Hardware reset complete, SPI bus unlocked\n");
+
 		/* Poll for device ready after hardware reset */
 		if (priv->cfg->id == ADIN2111_MAC) {
+			dev_info(&priv->spidev->dev, "ADIN2111: Polling for device ready after HW reset\n");
 			int poll_count;
 			bool device_ready = false;
 			
@@ -1159,7 +1166,6 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 			}
 			
 			if (!device_ready) {
-				spi_bus_unlock(priv->spidev->controller);
 				dev_err(&priv->spidev->dev, 
 					"Device failed to respond after HW reset (200ms timeout)\n");
 				return -ETIMEDOUT;
@@ -1168,8 +1174,6 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 			/* For ADIN1110, use documented 90ms delay */
 			fsleep(90000);
 		}
-
-		spi_bus_unlock(priv->spidev->controller);
 	}
 
 	/* First check device ID register (0x00) for ADIN2111 */
@@ -1733,6 +1737,9 @@ static int adin1110_probe(struct spi_device *spi)
 	struct adin1110_priv *priv;
 	int ret;
 
+	dev_info(dev, "ADIN2111: Probe starting for device %s\n", 
+		 dev_id ? dev_id->name : "unknown");
+
 	priv = devm_kzalloc(dev, sizeof(struct adin1110_priv), GFP_KERNEL);
 	if (!priv)
 		return -ENOMEM;
@@ -1741,6 +1748,9 @@ static int adin1110_probe(struct spi_device *spi)
 	priv->cfg = &adin1110_cfgs[dev_id->driver_data];
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_0;
+	
+	dev_info(dev, "ADIN2111: Configured for %s mode\n",
+		 priv->cfg->id == ADIN2111_MAC ? "ADIN2111" : "ADIN1110");
 
 	mutex_init(&priv->lock);
 	spin_lock_init(&priv->state_lock);
@@ -1750,18 +1760,24 @@ static int adin1110_probe(struct spi_device *spi)
 	if (priv->append_crc)
 		crc8_populate_msb(adin1110_crc_table, 0x7);
 
+	dev_info(dev, "ADIN2111: Starting SPI check\n");
 	ret = adin1110_check_spi(priv);
 	if (ret < 0) {
 		dev_err(dev, "Probe SPI Read check failed: %d\n", ret);
 		return ret;
 	}
+	dev_info(dev, "ADIN2111: SPI check passed\n");
 
+	dev_info(dev, "ADIN2111: Issuing software reset\n");
 	ret = adin1110_write_reg(priv, ADIN1110_RESET, ADIN1110_SWRESET);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(dev, "Software reset failed: %d\n", ret);
 		return ret;
+	}
 
 	/* Poll for device ready - check if we can read valid device ID */
 	if (priv->cfg->id == ADIN2111_MAC) {
+		dev_info(dev, "ADIN2111: Polling for device ready after reset\n");
 		int poll_count;
 		bool device_ready = false;
 		
