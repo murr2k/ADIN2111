@@ -5,6 +5,28 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.5] - 2025-08-27
+
+### Critical SPI Timeout Fix
+
+### Fixed
+- **SPI Timeout Issue**: Fixed -110 timeout errors after hardware reset
+  - Root cause: Complex polling mechanism was incompatible with device timing
+  - Solution: Replaced with ADI baseline approach (90ms fixed delay)
+  - Impact: Device now initializes successfully without timeouts
+- Removed duplicate device readiness polling that was causing failures
+- Initialization now follows proven ADI ADIN1110 baseline pattern
+
+### Changed
+- Hardware reset sequence: reset pulse → 90ms delay → single device ID read
+- Simplified debug messaging to match working driver behavior
+- Removed 10ms polling loops that were causing SPI bus contention
+
+### Technical Notes
+- Default adin1110 driver works because it uses simple timing approach
+- Our complex polling was fighting with device internal initialization timing
+- Now matches ADI's documented 90ms post-reset requirement
+
 ## [3.0.4] - 2025-08-26
 
 ### Critical Lockup Fix

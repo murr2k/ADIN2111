@@ -1134,46 +1134,12 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 		fsleep(10000);
 		gpiod_set_value(reset_gpio, 0);
 
-		/* Must unlock SPI bus before attempting any SPI reads */
-		spi_bus_unlock(priv->spidev->controller);
-		
-		dev_info(&priv->spidev->dev, "ADIN2111: Hardware reset complete, SPI bus unlocked\n");
+		/* Need to wait 90 ms before interacting with
+		 * the MAC after a HW reset (per ADI baseline).
+		 */
+		fsleep(90000);
 
-		/* Poll for device ready after hardware reset */
-		if (priv->cfg->id == ADIN2111_MAC) {
-			dev_info(&priv->spidev->dev, "ADIN2111: Polling for device ready after HW reset\n");
-			int poll_count;
-			bool device_ready = false;
-			
-			for (poll_count = 0; poll_count < 20; poll_count++) {
-				u32 val;
-				
-				/* Wait 10ms before each attempt */
-				fsleep(10000);
-				
-				/* Try to read device ID register */
-				ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-				if (ret == 0) {
-					val &= ADIN2111_DEVID_MASK;
-					if (val == ADIN2111_DEVICE_ID_VAL) {
-						device_ready = true;
-						dev_info(&priv->spidev->dev, 
-							"Device ready after HW reset: %d ms\n", 
-							(poll_count + 1) * 10);
-						break;
-					}
-				}
-			}
-			
-			if (!device_ready) {
-				dev_err(&priv->spidev->dev, 
-					"Device failed to respond after HW reset (200ms timeout)\n");
-				return -ETIMEDOUT;
-			}
-		} else {
-			/* For ADIN1110, use documented 90ms delay */
-			fsleep(90000);
-		}
+		spi_bus_unlock(priv->spidev->controller);
 	}
 
 	/* First check device ID register (0x00) for ADIN2111 */
@@ -1775,47 +1741,6 @@ static int adin1110_probe(struct spi_device *spi)
 		return ret;
 	}
 
-	/* Poll for device ready - check if we can read valid device ID */
-	if (priv->cfg->id == ADIN2111_MAC) {
-		dev_info(dev, "ADIN2111: Polling for device ready after reset\n");
-		int poll_count;
-		bool device_ready = false;
-		
-		for (poll_count = 0; poll_count < 20; poll_count++) {
-			u32 val;
-			
-			/* Wait 10ms before each attempt */
-			fsleep(10000);
-			
-			/* Try to read device ID register */
-			ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-			if (ret == 0) {
-				val &= ADIN2111_DEVID_MASK;
-				if (val == ADIN2111_DEVICE_ID_VAL) {
-					device_ready = true;
-					dev_info(&priv->spidev->dev, 
-						"Device ready after %d ms\n", 
-						(poll_count + 1) * 10);
-					break;
-				}
-			}
-			
-			/* Device not ready yet, continue polling */
-			if (poll_count == 9) {
-				dev_warn(&priv->spidev->dev, 
-					"Device not ready after 100ms, continuing...\n");
-			}
-		}
-		
-		if (!device_ready) {
-			dev_err(&priv->spidev->dev, 
-				"Device failed to become ready after 200ms (20 attempts)\n");
-			return -ETIMEDOUT;
-		}
-	} else {
-		/* For ADIN1110, use conservative fixed delay */
-		fsleep(90000);
-	}
 
 	/* Configure device based on module parameters */
 	if (priv->cfg->id == ADIN2111_MAC) {
