@@ -5,6 +5,48 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase1] - 2025-08-27
+
+### Single Interface Mode - Phase 1: Dynamic Interface Count
+
+### Added
+- **Dynamic Configuration Selection**: Driver now selects appropriate configuration based on `single_interface_mode` parameter
+- **New ADIN2111_MAC_SINGLE Configuration**: Dedicated config with `ports_nr = 1` for single interface mode
+- **Automatic Mode Detection**: When `single_interface_mode=1`, driver automatically uses single interface configuration
+
+### Fixed
+- **Interface Count Issue**: Single interface mode now properly configured to create only 1 network interface instead of 2
+- Root cause addressed: `ports_nr` was hardcoded to 2, now dynamically set to 1 for single interface mode
+
+### Changed
+- Added `ADIN2111_MAC_SINGLE` enum value for single interface mode identification
+- Updated probe logic to dynamically select configuration based on module parameter
+- Enhanced hardware configuration logic to handle both dual and single interface modes
+- Improved debug messages to clearly indicate selected mode
+
+### Implementation Details
+- **New Configuration Entry**:
+  ```c
+  {
+      .id = ADIN2111_MAC_SINGLE,
+      .name = "adin2111-single",
+      .phy_ids = {1, 2},
+      .ports_nr = 1,  // Single interface managing both PHYs
+      .phy_id_val = ADIN2111_PHY_ID_VAL,
+  }
+  ```
+- **Dynamic Selection Logic**: `modprobe adin2111 single_interface_mode=1` automatically selects single interface configuration
+
+### Next Phases
+- Phase 2: Single interface PHY management (unified PHY state handling)
+- Phase 3: Frame forwarding implementation (MAC learning table)
+- Phase 4: Network stack integration (proper RX/TX path handling)
+
+### Expected Behavior After Phase 1
+- Driver should create only 1 network interface when `single_interface_mode=1`
+- Hardware forwarding should be properly configured
+- Both PHY ports still managed internally by single interface
+
 ## [3.0.6] - 2025-08-27
 
 ### Critical Register Address Fix

@@ -134,6 +134,7 @@ DECLARE_CRC8_TABLE(adin1110_crc_table);
 enum adin1110_chips_id {
 	ADIN1110_MAC = 0,
 	ADIN2111_MAC,
+	ADIN2111_MAC_SINGLE,  /* ADIN2111 in single interface mode */
 };
 
 struct adin1110_cfg {
@@ -199,6 +200,13 @@ static struct adin1110_cfg adin1110_cfgs[] = {
 		.name = "adin2111",
 		.phy_ids = {1, 2},
 		.ports_nr = 2,
+		.phy_id_val = ADIN2111_PHY_ID_VAL,
+	},
+	{
+		.id = ADIN2111_MAC_SINGLE,
+		.name = "adin2111-single",
+		.phy_ids = {1, 2},
+		.ports_nr = 1,  /* Single interface managing both PHYs */
 		.phy_id_val = ADIN2111_PHY_ID_VAL,
 	},
 };
@@ -423,7 +431,8 @@ static int adin1110_write_fifo(struct adin1110_port_priv *port_priv,
 	}
 
 	/* Configure frame header with port selection */
-	if (priv->single_interface_mode && priv->cfg->id == ADIN2111_MAC) {
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE || 
+	    (priv->single_interface_mode && priv->cfg->id == ADIN2111_MAC)) {
 		/* In single interface mode, use MAC learning or flooding */
 		struct ethhdr *eth = (struct ethhdr *)txb->data;
 		u16 port_bits = 0;
@@ -1692,12 +1701,19 @@ static int adin1110_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	priv->spidev = spi;
-	priv->cfg = &adin1110_cfgs[dev_id->driver_data];
+	
+	/* Select configuration based on single_interface_mode parameter */
+	if (dev_id->driver_data == ADIN2111_MAC && single_interface_mode) {
+		priv->cfg = &adin1110_cfgs[ADIN2111_MAC_SINGLE];
+		dev_info(dev, "ADIN2111: Configured for single interface mode\n");
+	} else {
+		priv->cfg = &adin1110_cfgs[dev_id->driver_data];
+		dev_info(dev, "ADIN2111: Configured for %s mode\n",
+			 priv->cfg->id == ADIN2111_MAC ? "ADIN2111 dual interface" : "ADIN1110");
+	}
+	
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_0;
-	
-	dev_info(dev, "ADIN2111: Configured for %s mode\n",
-		 priv->cfg->id == ADIN2111_MAC ? "ADIN2111" : "ADIN1110");
 
 	mutex_init(&priv->lock);
 	spin_lock_init(&priv->state_lock);
@@ -1724,7 +1740,7 @@ static int adin1110_probe(struct spi_device *spi)
 
 
 	/* Configure device based on module parameters */
-	if (priv->cfg->id == ADIN2111_MAC) {
+	if (priv->cfg->id == ADIN2111_MAC || priv->cfg->id == ADIN2111_MAC_SINGLE) {
 		u32 config_val = 0;
 
 		/* Enable CONFIG1 sync */
@@ -1732,9 +1748,9 @@ static int adin1110_probe(struct spi_device *spi)
 		if (ret < 0)
 			return ret;
 
-		priv->single_interface_mode = single_interface_mode;
+		priv->single_interface_mode = (priv->cfg->id == ADIN2111_MAC_SINGLE) || single_interface_mode;
 
-		if (single_interface_mode) {
+		if (priv->cfg->id == ADIN2111_MAC_SINGLE || single_interface_mode) {
 			dev_info(dev, "Configuring ADIN2111 in single interface mode\n");
 			
 			/* Enable hardware forwarding between ports if requested */
