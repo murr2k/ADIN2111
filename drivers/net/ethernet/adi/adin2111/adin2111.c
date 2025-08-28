@@ -206,7 +206,7 @@ static struct adin1110_cfg adin1110_cfgs[] = {
 		.id = ADIN2111_MAC_SINGLE,
 		.name = "adin2111-single",
 		.phy_ids = {1, 2},
-		.ports_nr = 1,  /* Single interface managing both PHYs */
+		.ports_nr = 2,  /* Need 2 ports for RX FIFO access, but register only 1 netdev */
 		.phy_id_val = ADIN2111_PHY_ID_VAL,
 	},
 };
@@ -376,7 +376,16 @@ static int adin1110_read_fifo(struct adin1110_port_priv *port_priv)
 	}
 
 	skb_pull(rxb, header_len + ADIN1110_FRAME_HEADER_LEN);
-	rxb->protocol = eth_type_trans(rxb, port_priv->netdev);
+	
+	/* In single interface mode, forward all frames to the first (registered) interface */
+	if (port_priv->priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		rxb->protocol = eth_type_trans(rxb, port_priv->priv->ports[0]->netdev);
+		/* Add debug info for frame forwarding */
+		dev_dbg(&port_priv->priv->spidev->dev, 
+			"ADIN2111: RX frame from PHY port %d forwarded to eth0\n", port_priv->nr);
+	} else {
+		rxb->protocol = eth_type_trans(rxb, port_priv->netdev);
+	}
 
 	if ((port_priv->flags & IFF_ALLMULTI && rxb->pkt_type == PACKET_MULTICAST) ||
 	    (port_priv->flags & IFF_BROADCAST && rxb->pkt_type == PACKET_BROADCAST))
@@ -385,8 +394,15 @@ static int adin1110_read_fifo(struct adin1110_port_priv *port_priv)
 
 	netif_rx(rxb);
 
-	port_priv->rx_bytes += frame_size - ADIN1110_FRAME_HEADER_LEN;
-	port_priv->rx_packets++;
+	/* In single interface mode, accumulate stats on the registered interface */
+	if (port_priv->priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		struct adin1110_port_priv *stats_port = port_priv->priv->ports[0];
+		stats_port->rx_bytes += frame_size - ADIN1110_FRAME_HEADER_LEN;
+		stats_port->rx_packets++;
+	} else {
+		port_priv->rx_bytes += frame_size - ADIN1110_FRAME_HEADER_LEN;
+		port_priv->rx_packets++;
+	}
 
 	return 0;
 }
@@ -1675,12 +1691,21 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 	if (ret < 0)
 		return ret;
 
-	for (i = 0; i < priv->cfg->ports_nr; i++) {
+	/* In single interface mode, register only the first network interface
+	 * but keep both port structures for RX FIFO access
+	 */
+	int netdevs_to_register = (priv->cfg->id == ADIN2111_MAC_SINGLE) ? 1 : priv->cfg->ports_nr;
+	
+	for (i = 0; i < netdevs_to_register; i++) {
 		ret = devm_register_netdev(dev, priv->ports[i]->netdev);
 		if (ret < 0) {
 			dev_err(dev, "Failed to register network device.\n");
 			return ret;
 		}
+	}
+	
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		dev_info(dev, "ADIN2111: Single interface registered (managing both PHY ports internally)\n");
 	}
 
 	return 0;

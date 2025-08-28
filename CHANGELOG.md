@@ -5,6 +5,52 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase2] - 2025-08-27
+
+### Single Interface Mode - Phase 2: RX Path Fix ✅
+
+### CRITICAL FIX
+- **RX Path Working**: Fixed broken RX path causing ping replies to be lost
+- **Both PHY Ports Active**: Now reads RX frames from both PHY ports in single interface mode
+- **Frame Forwarding**: All received frames forwarded to single network interface
+
+### Root Cause Fixed
+The Wireshark capture confirmed the issue: **TX working, RX broken**
+- Problem: IRQ handler only read port 0 RX FIFO, port 1 frames were lost
+- Solution: Create 2 internal port structures, register only 1 network interface
+- Both PHY ports now monitored for incoming frames
+
+### Implementation Details
+- **Port Structure**: `ports_nr = 2` (for RX FIFO access from both PHY ports)
+- **Network Interfaces**: Register only 1 interface in single mode (`netdevs_to_register = 1`)  
+- **Frame Routing**: All RX frames forwarded to `ports[0]->netdev` (the registered interface)
+- **Statistics**: RX stats accumulated on the registered interface
+
+### Technical Changes
+```c
+// Before (broken):
+for (i = 0; i < priv->cfg->ports_nr; i++) // Only port 0 when ports_nr = 1
+    if (adin1110_port_rx_ready(priv->ports[i], status1))
+        adin1110_read_frames(priv->ports[i], ...); // Port 1 never read
+
+// After (fixed):  
+for (i = 0; i < priv->cfg->ports_nr; i++) // Both port 0 AND port 1 when ports_nr = 2
+    if (adin1110_port_rx_ready(priv->ports[i], status1))
+        adin1110_read_frames(priv->ports[i], ...); // Both ports read!
+
+// Frame forwarding:
+rxb->protocol = eth_type_trans(rxb, port_priv->priv->ports[0]->netdev); // Always to eth0
+```
+
+### Expected Behavior After Phase 2
+- **Single interface created** ✅ (from Phase 1)
+- **RX frames received** ✅ (ping replies should work)
+- **Both ports working** ✅ (traffic visible on both physical ports)
+- **Cut-through forwarding** ✅ (frames forwarded between ports internally)
+
+### Next Phase
+- Phase 3: MAC learning optimization (current flooding works but inefficient)
+
 ## [3.0.7-phase1] - 2025-08-27
 
 ### Single Interface Mode - Phase 1: Dynamic Interface Count
