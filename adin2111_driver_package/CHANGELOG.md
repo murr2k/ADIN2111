@@ -5,6 +5,29 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.6] - 2025-08-27
+
+### Critical Register Address Fix
+
+### Fixed
+- **Wrong Device ID Register**: Fixed reading register 0x00 instead of 0x01 for device ID
+  - Root cause: ADIN2111 device ID is in PHY_ID register (0x01), not DEVID register (0x00) 
+  - Register 0x00 was returning 0x0010 (wrong register)
+  - Register 0x01 contains 0x0283BCA1 (correct ADIN2111 PHY ID)
+  - Solution: Use same approach as ADI baseline - read PHY_ID register only
+- Removed redundant device ID check that was using wrong register
+- Now matches ADI baseline: single PHY_ID read at register 0x01
+
+### Changed
+- Simplified device detection to single PHY_ID register read (like ADI baseline)
+- Device ID validation now uses correct register containing 0x0283xxxx value
+- Removed confusing dual device ID checks
+
+### Technical Notes
+- ADIN2111 follows same register layout as ADIN1110 for PHY_ID (register 0x01)
+- Register 0x00 (DEVID) is not the primary device identification register
+- Client confirmed 0x0283 prefix indicates correct register access
+
 ## [3.0.5] - 2025-08-27
 
 ### Critical SPI Timeout Fix

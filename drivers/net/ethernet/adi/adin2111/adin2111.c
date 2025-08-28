@@ -1142,25 +1142,6 @@ static int adin1110_check_spi(struct adin1110_priv *priv)
 		spi_bus_unlock(priv->spidev->controller);
 	}
 
-	/* First check device ID register (0x00) for ADIN2111 */
-	if (priv->cfg->id == ADIN2111_MAC) {
-		ret = adin1110_read_reg(priv, ADIN2111_DEVID, &val);
-		if (ret < 0) {
-			dev_err(&priv->spidev->dev, "Failed to read device ID: %d\n", ret);
-			return ret;
-		}
-
-		val &= ADIN2111_DEVID_MASK;
-		if (val != ADIN2111_DEVICE_ID_VAL) {
-			dev_err(&priv->spidev->dev, "Device ID expected: 0x%04x, read: 0x%04x\n",
-				ADIN2111_DEVICE_ID_VAL, val);
-			dev_err(&priv->spidev->dev, "Check SPI connection and power\n");
-			return -ENODEV;
-		}
-		dev_info(&priv->spidev->dev, "ADIN2111 detected, ID: 0x%04x\n", val);
-	}
-
-	/* Then check PHY ID for compatibility */
 	ret = adin1110_read_reg(priv, ADIN1110_PHY_ID, &val);
 	if (ret < 0)
 		return ret;
