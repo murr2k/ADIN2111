@@ -1724,11 +1724,7 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 		/* Start PHY for port 1 even though its netdev isn't registered 
 		 * This ensures both ports can detect link status and ARP works */
 		if (priv->ports[1]->phydev) {
-			ret = phy_start(priv->ports[1]->phydev);
-			if (ret) {
-				dev_err(dev, "Failed to start PHY for port 1: %d\n", ret);
-				return ret;
-			}
+			phy_start(priv->ports[1]->phydev);
 			dev_info(dev, "Started PHY for port 1 in single interface mode\n");
 		}
 		
