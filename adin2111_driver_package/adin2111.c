@@ -598,8 +598,16 @@ static int adin1110_register_mdiobus(struct adin1110_priv *priv,
 static bool adin1110_port_rx_ready(struct adin1110_port_priv *port_priv,
 				   u32 status)
 {
-	if (!netif_oper_up(port_priv->netdev))
-		return false;
+	/* In single interface mode, port 1 netdev isn't registered but we still
+	 * need to process its RX frames. Check if port 0 is up instead.
+	 */
+	if (port_priv->priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		if (!netif_oper_up(port_priv->priv->ports[0]->netdev))
+			return false;
+	} else {
+		if (!netif_oper_up(port_priv->netdev))
+			return false;
+	}
 
 	if (!port_priv->nr)
 		return !!(status & ADIN1110_RX_RDY);

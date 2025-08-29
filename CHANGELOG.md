@@ -5,6 +5,32 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase3] - 2025-08-29
+
+### Single Interface Mode - Phase 3: Critical RX Ready Fix ⚡
+
+### CRITICAL HOTFIX
+- **Root Cause**: `adin1110_port_rx_ready()` checked if port 1's netdev was up
+- **Problem**: In single interface mode, port 1's netdev is never registered/brought up
+- **Result**: Port 1 RX frames never processed, causing ping reply loss
+- **Fix**: Check if port 0 (registered interface) is up instead for both ports
+
+### Technical Details
+- Modified `adin1110_port_rx_ready()` for single interface mode
+- Both PHY ports now properly process RX frames when eth0 is up
+- Fixes the "pretty much the same" issue from Phase 2 testing
+
+### Code Change
+```c
+if (port_priv->priv->cfg->id == ADIN2111_MAC_SINGLE) {
+    if (!netif_oper_up(port_priv->priv->ports[0]->netdev))
+        return false;  // Check port 0 status for both ports
+} else {
+    if (!netif_oper_up(port_priv->netdev))
+        return false;  // Normal dual-port behavior
+}
+```
+
 ## [3.0.7-phase2] - 2025-08-27
 
 ### Single Interface Mode - Phase 2: RX Path Fix ✅
