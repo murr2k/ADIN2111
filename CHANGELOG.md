@@ -5,6 +5,30 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase4] - 2025-08-29
+
+### Single Interface Mode - Phase 4: Hardware Interrupt Enable Fix 🔧
+
+### CRITICAL HARDWARE FIX
+- **Root Cause**: Port 1 RX ready interrupt (`ADIN2111_RX_RDY_IRQ`) was never enabled
+- **Problem**: Interrupt mask only enabled port 1 IRQ for `ADIN2111_MAC`, not `ADIN2111_MAC_SINGLE`
+- **Result**: Hardware never generated interrupts when port 1 received frames
+- **Fix**: Enable port 1 RX interrupt for both `ADIN2111_MAC` and `ADIN2111_MAC_SINGLE`
+
+### Code Change
+```c
+// Before: Only ADIN2111_MAC got port 1 interrupts
+if (priv->cfg->id == ADIN2111_MAC)
+    val |= ADIN2111_RX_RDY_IRQ;
+
+// After: Both configurations get port 1 interrupts  
+if (priv->cfg->id == ADIN2111_MAC || priv->cfg->id == ADIN2111_MAC_SINGLE)
+    val |= ADIN2111_RX_RDY_IRQ;
+```
+
+### Analysis
+This explains why Phase 3 showed "no difference" - the interrupt system itself wasn't set up to detect port 1 RX frames, making all previous fixes ineffective.
+
 ## [3.0.7-phase3] - 2025-08-29
 
 ### Single Interface Mode - Phase 3: Critical RX Ready Fix ⚡

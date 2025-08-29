@@ -963,7 +963,7 @@ static int adin1110_net_open(struct net_device *net_dev)
 		goto out;
 
 	val = ADIN1110_TX_RDY_IRQ | ADIN1110_RX_RDY_IRQ | ADIN1110_SPI_ERR_IRQ;
-	if (priv->cfg->id == ADIN2111_MAC)
+	if (priv->cfg->id == ADIN2111_MAC || priv->cfg->id == ADIN2111_MAC_SINGLE)
 		val |= ADIN2111_RX_RDY_IRQ;
 
 	priv->irq_mask = val;
