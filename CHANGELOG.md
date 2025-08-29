@@ -5,6 +5,38 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase5] - 2025-08-29
+
+### Single Interface Mode - Phase 5: Hardware Forwarding Enable Fix 🎯
+
+### CRITICAL BREAKTHROUGH
+- **Root Cause**: `adin1110_can_offload_forwarding()` only enabled hardware forwarding for `ADIN2111_MAC`
+- **Problem**: Single interface mode (`ADIN2111_MAC_SINGLE`) fell back to broken `adin1110_setup_rx_mode()`
+- **Result**: Software-based MAC handling couldn't forward frames between physical ports to single interface
+- **Solution**: Enable hardware forwarding for single interface mode with proper bridge/STP logic
+
+### Technical Analysis
+**Why this is the solution:**
+- Dual interface mode uses hardware forwarding → works perfectly
+- Single interface mode was using software MAC handling → completely broken
+- Hardware forwarding is what actually makes the ADIN2111 switch work correctly
+
+### Code Changes
+```c
+// Enable hardware forwarding for single interface mode
+if (priv->cfg->id != ADIN2111_MAC && priv->cfg->id != ADIN2111_MAC_SINGLE)
+    return false;
+
+// Skip bridge checks in single interface mode
+if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+    /* Single network interface acts as the bridge */
+} else {
+    /* Original bridge validation logic */
+}
+```
+
+This should finally enable proper frame forwarding from both physical ports to the single network interface.
+
 ## [3.0.7-phase4] - 2025-08-29
 
 ### Single Interface Mode - Phase 4: Hardware Interrupt Enable Fix 🔧

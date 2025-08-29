@@ -904,19 +904,30 @@ static bool adin1110_can_offload_forwarding(struct adin1110_priv *priv)
 {
 	int i;
 
-	if (priv->cfg->id != ADIN2111_MAC)
+	if (priv->cfg->id != ADIN2111_MAC && priv->cfg->id != ADIN2111_MAC_SINGLE)
 		return false;
 
 	/* Can't enable forwarding if ports do not belong to the same bridge */
-	if (priv->ports[0]->bridge != priv->ports[1]->bridge || !priv->ports[0]->bridge)
-		return false;
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		/* In single interface mode, always allow forwarding between physical ports */
+		/* The single network interface acts as the bridge */
+	} else {
+		if (priv->ports[0]->bridge != priv->ports[1]->bridge || !priv->ports[0]->bridge)
+			return false;
+	}
 
 	/* Can't enable forwarding if there is a port
 	 * that has been blocked by STP.
 	 */
-	for (i = 0; i < priv->cfg->ports_nr; i++) {
-		if (priv->ports[i]->state != BR_STATE_FORWARDING)
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		/* In single interface mode, only check port 0 (registered interface) state */
+		if (priv->ports[0]->state != BR_STATE_FORWARDING)
 			return false;
+	} else {
+		for (i = 0; i < priv->cfg->ports_nr; i++) {
+			if (priv->ports[i]->state != BR_STATE_FORWARDING)
+				return false;
+		}
 	}
 
 	return true;
