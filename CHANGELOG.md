@@ -5,6 +5,42 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase8] - 2025-08-29
+
+### Single Interface Mode - Phase 8: Link Status Aggregation Fix 🎯
+
+### CRITICAL CARRIER STATUS ISSUE RESOLVED
+- **Root Cause**: eth0 only reported link status from port 0's PHY, ignoring port 1's PHY status
+- **Problem**: Network stack saw NO-CARRIER even when port 1 had a connected device
+- **Result**: ARP/ping failed because eth0 appeared down when only port 1 was connected
+- **Solution**: Modified `adin1110_adjust_link()` to aggregate link status from both PHYs in single interface mode
+
+### Technical Analysis
+**Link Status Aggregation:**
+- Single interface mode must report eth0 as UP if EITHER PHY port has link
+- Original code only checked the PHY connected to eth0 (port 0)
+- Port 1's PHY link changes were never reflected in eth0's carrier status
+- Network stack relies on carrier status for routing and ARP decisions
+
+### Code Change
+```c
+static void adin1110_adjust_link(struct net_device *dev)
+{
+    /* In single interface mode, check link status of both PHYs */
+    if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+        /* eth0 should be up if EITHER PHY port has link */
+        link_up = (priv->ports[0]->phydev && priv->ports[0]->phydev->link) ||
+                  (priv->ports[1]->phydev && priv->ports[1]->phydev->link);
+                  
+        if (link_up && !netif_carrier_ok(dev)) {
+            netif_carrier_on(dev);
+        } else if (!link_up && netif_carrier_ok(dev)) {
+            netif_carrier_off(dev);
+        }
+    }
+}
+```
+
 ## [3.0.7-phase7] - 2025-08-29
 
 ### Single Interface Mode - Phase 7: PHY Initialization Fix 🎯
@@ -31,11 +67,7 @@ if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
     /* Start PHY for port 1 even though its netdev isn't registered 
      * This ensures both ports can detect link status and ARP works */
     if (priv->ports[1]->phydev) {
-        ret = phy_start(priv->ports[1]->phydev);
-        if (ret) {
-            dev_err(dev, "Failed to start PHY for port 1: %d\n", ret);
-            return ret;
-        }
+        phy_start(priv->ports[1]->phydev);
         dev_info(dev, "Started PHY for port 1 in single interface mode\n");
     }
 }

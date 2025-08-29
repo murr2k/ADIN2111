@@ -1144,7 +1144,38 @@ static const struct ethtool_ops adin1110_ethtool_ops = {
 
 static void adin1110_adjust_link(struct net_device *dev)
 {
+	struct adin1110_port_priv *port_priv = netdev_priv(dev);
+	struct adin1110_priv *priv = port_priv->priv;
 	struct phy_device *phydev = dev->phydev;
+	struct net_device *primary_netdev;
+	bool link_up = false;
+	
+	/* In single interface mode, check link status of both PHYs */
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		/* Always use eth0 (port 0's netdev) for carrier status */
+		primary_netdev = priv->ports[0]->netdev;
+		
+		/* eth0 should be up if EITHER PHY port has link */
+		link_up = (priv->ports[0]->phydev && priv->ports[0]->phydev->link) ||
+			  (priv->ports[1]->phydev && priv->ports[1]->phydev->link);
+			  
+		if (link_up && !netif_carrier_ok(primary_netdev)) {
+			netif_carrier_on(primary_netdev);
+			dev_info(&priv->spidev->dev, "Link up on single interface (port 0: %s, port 1: %s)\n",
+				priv->ports[0]->phydev->link ? "up" : "down",
+				priv->ports[1]->phydev->link ? "up" : "down");
+		} else if (!link_up && netif_carrier_ok(primary_netdev)) {
+			netif_carrier_off(primary_netdev);
+			dev_info(&priv->spidev->dev, "Link down on single interface (both ports down)\n");
+		}
+	} else {
+		/* Normal dual interface mode - only check this port's PHY */
+		if (phydev->link && !netif_carrier_ok(dev)) {
+			netif_carrier_on(dev);
+		} else if (!phydev->link && netif_carrier_ok(dev)) {
+			netif_carrier_off(dev);
+		}
+	}
 
 	if (!phydev->link)
 		phy_print_status(phydev);
