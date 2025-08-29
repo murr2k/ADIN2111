@@ -919,15 +919,9 @@ static bool adin1110_can_offload_forwarding(struct adin1110_priv *priv)
 	/* Can't enable forwarding if there is a port
 	 * that has been blocked by STP.
 	 */
-	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
-		/* In single interface mode, only check port 0 (registered interface) state */
-		if (priv->ports[0]->state != BR_STATE_FORWARDING)
+	for (i = 0; i < priv->cfg->ports_nr; i++) {
+		if (priv->ports[i]->state != BR_STATE_FORWARDING)
 			return false;
-	} else {
-		for (i = 0; i < priv->cfg->ports_nr; i++) {
-			if (priv->ports[i]->state != BR_STATE_FORWARDING)
-				return false;
-		}
 	}
 
 	return true;
@@ -1724,6 +1718,8 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 	}
 	
 	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		/* Initialize port 1's state since its netdev won't be opened */
+		priv->ports[1]->state = BR_STATE_FORWARDING;
 		dev_info(dev, "ADIN2111: Single interface registered (managing both PHY ports internally)\n");
 	}
 

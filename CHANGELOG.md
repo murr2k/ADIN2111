@@ -5,11 +5,31 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase6] - 2025-08-29
+
+### Single Interface Mode - Phase 6: Port 1 STP State Initialization 🔄
+
+### FINAL MISSING PIECE
+- **Root Cause**: Port 1's STP state was never set to `BR_STATE_FORWARDING` in single interface mode
+- **Problem**: Only port 0's netdev gets opened (state set), port 1's netdev never opened (state uninitialized)
+- **Result**: `adin1110_can_offload_forwarding()` failed STP check for port 1, no hardware forwarding
+- **Solution**: Initialize port 1's state to `BR_STATE_FORWARDING` during single interface mode setup
+
+### Code Change
+```c
+if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+    /* Initialize port 1's state since its netdev won't be opened */
+    priv->ports[1]->state = BR_STATE_FORWARDING;
+}
+```
+
+Now both ports are properly configured for hardware forwarding in single interface mode.
+
 ## [3.0.7-phase5] - 2025-08-29
 
 ### Single Interface Mode - Phase 5: Hardware Forwarding Enable Fix 🎯
 
-### CRITICAL BREAKTHROUGH
+### CRITICAL BREAKTHROUGH  
 - **Root Cause**: `adin1110_can_offload_forwarding()` only enabled hardware forwarding for `ADIN2111_MAC`
 - **Problem**: Single interface mode (`ADIN2111_MAC_SINGLE`) fell back to broken `adin1110_setup_rx_mode()`
 - **Result**: Software-based MAC handling couldn't forward frames between physical ports to single interface
