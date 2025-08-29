@@ -5,6 +5,44 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase7] - 2025-08-29
+
+### Single Interface Mode - Phase 7: PHY Initialization Fix 🎯
+
+### FINAL ROOT CAUSE RESOLVED
+- **Root Cause**: Port 2's PHY was never initialized in single interface mode causing NO-CARRIER status
+- **Problem**: PHY devices created for both ports, but `phy_start()` only called when netdev opens
+- **Result**: Port 2 showed `<NO-CARRIER>` status, ARP/IP traffic failed for devices on port 2
+- **Solution**: Explicitly start PHY for port 1 (physical port 2) even when its netdev isn't registered
+
+### Technical Analysis
+**Layer 2 vs Layer 3 Discovery:**
+- Layer 2 (direct MAC communication) worked - hardware forwarding functional
+- Layer 3 (IP/ARP) failed - port 2 PHY never brought up for link detection
+- Only registered network interfaces get PHY initialization in normal flow
+- Single interface mode registers only eth0, leaving port 2's PHY uninitialized
+
+### Code Change
+```c
+if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+    /* Initialize port 1's state since its netdev won't be opened */
+    priv->ports[1]->state = BR_STATE_FORWARDING;
+    
+    /* Start PHY for port 1 even though its netdev isn't registered 
+     * This ensures both ports can detect link status and ARP works */
+    if (priv->ports[1]->phydev) {
+        ret = phy_start(priv->ports[1]->phydev);
+        if (ret) {
+            dev_err(dev, "Failed to start PHY for port 1: %d\n", ret);
+            return ret;
+        }
+        dev_info(dev, "Started PHY for port 1 in single interface mode\n");
+    }
+}
+```
+
+This completes the single interface mode implementation by ensuring both PHYs are active.
+
 ## [3.0.7-phase6] - 2025-08-29
 
 ### Single Interface Mode - Phase 6: Port 1 STP State Initialization 🔄

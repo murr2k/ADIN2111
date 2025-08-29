@@ -1720,6 +1720,18 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
 		/* Initialize port 1's state since its netdev won't be opened */
 		priv->ports[1]->state = BR_STATE_FORWARDING;
+		
+		/* Start PHY for port 1 even though its netdev isn't registered 
+		 * This ensures both ports can detect link status and ARP works */
+		if (priv->ports[1]->phydev) {
+			ret = phy_start(priv->ports[1]->phydev);
+			if (ret) {
+				dev_err(dev, "Failed to start PHY for port 1: %d\n", ret);
+				return ret;
+			}
+			dev_info(dev, "Started PHY for port 1 in single interface mode\n");
+		}
+		
 		dev_info(dev, "ADIN2111: Single interface registered (managing both PHY ports internally)\n");
 	}
 
