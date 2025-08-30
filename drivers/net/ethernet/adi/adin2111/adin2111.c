@@ -1759,6 +1759,15 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 			dev_info(dev, "Started PHY for port 1 in single interface mode\n");
 		}
 		
+		/* Setup RX mode for port 1 to forward packets to SPI host
+		 * This is critical - port 1's MAC filtering was never configured */
+		ret = adin1110_setup_rx_mode(priv->ports[1]);
+		if (ret < 0) {
+			dev_err(dev, "Failed to setup RX mode for port 1: %d\n", ret);
+			return ret;
+		}
+		dev_info(dev, "Configured port 1 RX mode for SPI host forwarding\n");
+		
 		dev_info(dev, "ADIN2111: Single interface registered (managing both PHY ports internally)\n");
 	}
 

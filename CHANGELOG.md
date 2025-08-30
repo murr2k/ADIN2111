@@ -5,6 +5,42 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase9] - 2025-08-29
+
+### Single Interface Mode - Phase 9: RX Mode Configuration Fix 🎯
+
+### FINAL MISSING PIECE - SPI HOST FORWARDING
+- **Root Cause**: Port 1's RX mode was never configured, so MAC filtering/forwarding rules were missing
+- **Problem**: Port 1 PHY showed link but packets never reached SPI host (eth0)
+- **Result**: Devices on port 1 couldn't communicate because frames weren't forwarded to network stack
+- **Solution**: Explicitly configure `adin1110_setup_rx_mode()` for port 1 in single interface mode
+
+### Technical Analysis
+**The Complete Picture:**
+- ✅ Phase 5: Hardware forwarding between ports enabled
+- ✅ Phase 6: STP states configured for both ports
+- ✅ Phase 7: PHY initialization for both ports
+- ✅ Phase 8: Link status aggregation working
+- ❌ **Missing**: Port 1's MAC filtering rules to forward TO_HOST
+
+**Why RX mode matters:**
+- `adin1110_setup_rx_mode()` configures MAC address filtering and forwarding rules
+- Only called when a network device opens - port 1's netdev never opens in single interface mode
+- Without proper RX mode, port 1 packets are received by PHY but never forwarded to SPI host
+
+### Code Change
+```c
+/* Setup RX mode for port 1 to forward packets to SPI host
+ * This is critical - port 1's MAC filtering was never configured */
+ret = adin1110_setup_rx_mode(priv->ports[1]);
+if (ret < 0) {
+    dev_err(dev, "Failed to setup RX mode for port 1: %d\n", ret);
+    return ret;
+}
+```
+
+This completes the single interface mode implementation by ensuring both ports forward packets to the SPI host.
+
 ## [3.0.7-phase8] - 2025-08-29
 
 ### Single Interface Mode - Phase 8: Link Status Aggregation Fix 🎯
