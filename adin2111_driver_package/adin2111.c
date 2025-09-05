@@ -610,7 +610,7 @@ static bool adin1110_port_rx_ready(struct adin1110_port_priv *port_priv,
 	}
 
 	if (single_interface_mode && !port_priv->nr)
-      return !!(status & (ADIN1110_RX_RDY | ADIN2111_P2_RX_RDY));  // Check both ports
+		return !!(status & (ADIN1110_RX_RDY | ADIN2111_P2_RX_RDY));
 	else if (!port_priv->nr)
 		return !!(status & ADIN1110_RX_RDY);
 	else
@@ -1146,7 +1146,38 @@ static const struct ethtool_ops adin1110_ethtool_ops = {
 
 static void adin1110_adjust_link(struct net_device *dev)
 {
+	struct adin1110_port_priv *port_priv = netdev_priv(dev);
+	struct adin1110_priv *priv = port_priv->priv;
 	struct phy_device *phydev = dev->phydev;
+	struct net_device *primary_netdev;
+	bool link_up = false;
+	
+	/* In single interface mode, check link status of both PHYs */
+	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
+		/* Always use eth0 (port 0's netdev) for carrier status */
+		primary_netdev = priv->ports[0]->netdev;
+		
+		/* eth0 should be up if EITHER PHY port has link */
+		link_up = (priv->ports[0]->phydev && priv->ports[0]->phydev->link) ||
+			  (priv->ports[1]->phydev && priv->ports[1]->phydev->link);
+			  
+		if (link_up && !netif_carrier_ok(primary_netdev)) {
+			netif_carrier_on(primary_netdev);
+			dev_info(&priv->spidev->dev, "Link up on single interface (port 0: %s, port 1: %s)\n",
+				priv->ports[0]->phydev->link ? "up" : "down",
+				priv->ports[1]->phydev->link ? "up" : "down");
+		} else if (!link_up && netif_carrier_ok(primary_netdev)) {
+			netif_carrier_off(primary_netdev);
+			dev_info(&priv->spidev->dev, "Link down on single interface (both ports down)\n");
+		}
+	} else {
+		/* Normal dual interface mode - only check this port's PHY */
+		if (phydev->link && !netif_carrier_ok(dev)) {
+			netif_carrier_on(dev);
+		} else if (!phydev->link && netif_carrier_ok(dev)) {
+			netif_carrier_off(dev);
+		}
+	}
 
 	if (!phydev->link)
 		phy_print_status(phydev);
@@ -1722,6 +1753,23 @@ static int adin1110_probe_netdevs(struct adin1110_priv *priv)
 	if (priv->cfg->id == ADIN2111_MAC_SINGLE) {
 		/* Initialize port 1's state since its netdev won't be opened */
 		priv->ports[1]->state = BR_STATE_FORWARDING;
+		
+		/* Start PHY for port 1 even though its netdev isn't registered 
+		 * This ensures both ports can detect link status and ARP works */
+		if (priv->ports[1]->phydev) {
+			phy_start(priv->ports[1]->phydev);
+			dev_info(dev, "Started PHY for port 1 in single interface mode\n");
+		}
+		
+		/* Setup RX mode for port 1 to forward packets to SPI host
+		 * This is critical - port 1's MAC filtering was never configured */
+		ret = adin1110_setup_rx_mode(priv->ports[1]);
+		if (ret < 0) {
+			dev_err(dev, "Failed to setup RX mode for port 1: %d\n", ret);
+			return ret;
+		}
+		dev_info(dev, "Configured port 1 RX mode for SPI host forwarding\n");
+		
 		dev_info(dev, "ADIN2111: Single interface registered (managing both PHY ports internally)\n");
 	}
 
