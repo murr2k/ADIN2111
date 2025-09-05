@@ -73,6 +73,10 @@ doxygen/
 *.orig
 *.rej
 
+# Wireshark capture files
+*.pcapng
+*.pcap
+
 # Claude Flow generated files
 .claude/settings.local.json
 .claude-flow/

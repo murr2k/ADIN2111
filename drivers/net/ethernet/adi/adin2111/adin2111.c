@@ -609,7 +609,9 @@ static bool adin1110_port_rx_ready(struct adin1110_port_priv *port_priv,
 			return false;
 	}
 
-	if (!port_priv->nr)
+	if (single_interface_mode && !port_priv->nr)
+		return !!(status & (ADIN1110_RX_RDY | ADIN2111_P2_RX_RDY));
+	else if (!port_priv->nr)
 		return !!(status & ADIN1110_RX_RDY);
 	else
 		return !!(status & ADIN2111_P2_RX_RDY);

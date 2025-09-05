@@ -5,6 +5,49 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase10] - 2025-09-05
+
+### Single Interface Mode - Phase 10: RX Path Critical Fix 🎯
+
+### BREAKTHROUGH - BIDIRECTIONAL COMMUNICATION RESTORED
+- **Root Cause**: `adin1110_port_rx_ready()` only checked Port 1 RX status in single interface mode
+- **Problem**: Packets arriving on Port 2 were never processed, causing unidirectional communication
+- **Evidence**: Wireshark analysis showed ping requests going out but no replies coming back
+- **Result**: Complete RX failure for traffic arriving on Port 2 physical connector
+
+### The Missing Logic
+**Before (Broken):**
+```c
+if (!port_priv->nr)
+    return !!(status & ADIN1110_RX_RDY);     // Only Port 1 - bit 4
+else
+    return !!(status & ADIN2111_P2_RX_RDY);  // Only Port 2 - bit 17
+```
+
+**After (Fixed):**
+```c
+if (single_interface_mode && !port_priv->nr)
+    return !!(status & (ADIN1110_RX_RDY | ADIN2111_P2_RX_RDY));  // Both ports
+else if (!port_priv->nr)
+    return !!(status & ADIN1110_RX_RDY);
+else
+    return !!(status & ADIN2111_P2_RX_RDY);
+```
+
+### Why This Was the Final Piece
+- **TX worked perfectly** - single TX path, no issues
+- **RX failed selectively** - only processed packets from Port 1, ignored Port 2
+- **Single interface mode** - logical port 0 must check both physical ports for incoming traffic
+- **ADIN1110 baseline worked** - single physical port, no ambiguity
+
+### Technical Impact
+- ✅ **Bidirectional ping** - Both requests and replies now work
+- ✅ **Port flexibility** - Devices can connect to either physical port
+- ✅ **True single interface** - Both ports act as one unified network interface
+- ✅ **Hardware forwarding** - Cut-through switching with proper RX processing
+
+This completes the single interface mode implementation with full bidirectional communication.
+
 ## [3.0.7-phase9] - 2025-08-29
 
 ### Single Interface Mode - Phase 9: RX Mode Configuration Fix 🎯
