@@ -5,6 +5,47 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-critical-fix] - 2025-09-06
+
+### CRITICAL: Dual Interface Mode Restored 🚨
+
+### ROOT CAUSE DISCOVERED AND FIXED
+- **Problem**: Our single interface modifications **broke basic dual interface mode**
+- **Evidence**: Pristine ADIN1110 driver works perfectly, ours fails even in dual mode
+- **Root Cause**: `adin1110_adjust_link()` was corrupted with complex logic that interfered with normal operation
+
+### The Fatal Error
+**Our Broken Version:**
+```c
+static void adin1110_adjust_link(struct net_device *dev) {
+    // 37 lines of complex single interface logic
+    // that broke normal dual interface carrier handling
+}
+```
+
+**Original Working Version (Restored):**
+```c
+static void adin1110_adjust_link(struct net_device *dev) {
+    struct phy_device *phydev = dev->phydev;
+    if (!phydev->link)
+        phy_print_status(phydev);
+}
+```
+
+### Why This Broke Everything
+- **Dual interface mode** relies on Linux bridge layer for link aggregation
+- **Driver-level carrier manipulation** conflicts with bridge operation  
+- **Original design** lets network stack handle carrier status naturally
+- **Our modifications** tried to force carrier control at wrong layer
+
+### Technical Impact
+- ✅ **Dual interface mode works** - eth0 + eth1 + bridge setup functions
+- ✅ **Bridge forwarding** - packets route properly between ports
+- ✅ **Link detection** - PHY status reported correctly per port
+- ✅ **Compatible with pristine driver behavior** - same network topology
+
+This restores the fundamental dual-port operation that ADIN2111 was designed for.
+
 ## [3.0.7-phase10] - 2025-09-05
 
 ### Single Interface Mode - Phase 10: RX Path Critical Fix 🎯
