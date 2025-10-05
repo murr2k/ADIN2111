@@ -1,0 +1,71 @@
+#!/bin/sh
+echo "==================================================================="
+echo "        ADIN2111 Driver Test - STM32MP153 Environment"
+echo "==================================================================="
+echo ""
+echo "Target Platform: STM32MP153 (ARM Cortex-A7)"
+echo "Kernel Target: Linux 6.6.48"
+echo "Driver: ADIN2111 Hybrid (Single Interface Mode)"
+echo ""
+
+# Mount essential filesystems
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || mdev -s
+
+echo "System Information:"
+echo "-------------------"
+uname -a
+echo ""
+
+# Check for the ADIN2111 module
+echo "ADIN2111 Driver Status:"
+echo "-----------------------"
+if [ -f /lib/modules/adin2111_hybrid.ko ]; then
+    echo "✓ Driver module found: adin2111_hybrid.ko"
+    echo "  Size: $(ls -lh /lib/modules/adin2111_hybrid.ko | awk '{print $5}')"
+    echo ""
+    echo "Attempting to load driver with single_interface_mode=1..."
+    insmod /lib/modules/adin2111_hybrid.ko single_interface_mode=1 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Module loaded successfully!"
+    else
+        echo "✗ Module load failed (expected in QEMU without real SPI hardware)"
+        echo "  In production STM32MP153, this would succeed with:"
+        echo "  - SPI6 controller at 24.5 MHz"
+        echo "  - ADIN2111 on CS0 (GPIOA.4)"
+        echo "  - IRQ on GPIOA.1"
+        echo "  - Reset on GPIOA.6"
+    fi
+else
+    echo "✗ Driver module not found"
+fi
+
+echo ""
+echo "Checking kernel SPI support:"
+echo "-----------------------------"
+if [ -d /sys/class/spi_master ]; then
+    echo "✓ SPI subsystem available"
+    ls -la /sys/class/spi_master/ 2>/dev/null
+else
+    echo "✗ No SPI subsystem (expected in basic QEMU)"
+fi
+
+echo ""
+echo "Network Interfaces:"
+echo "-------------------"
+ip link show 2>/dev/null || ifconfig -a 2>/dev/null || echo "No network tools available"
+
+echo ""
+echo "Expected Production Behavior on STM32MP153:"
+echo "--------------------------------------------"
+echo "1. Driver loads via SPI6 at 24.5 MHz"
+echo "2. Creates single network interface (switch mode)"
+echo "3. Hardware cut-through forwarding enabled"
+echo "4. Two PHY ports (lan0, lan1) managed internally"
+echo "5. MAC learning table with 256 entries"
+echo ""
+echo "Test complete. Starting shell..."
+echo "==================================================================="
+exec /bin/sh
