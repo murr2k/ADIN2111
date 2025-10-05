@@ -5,6 +5,49 @@ All notable changes to the ADIN2111 Linux Driver project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.7-phase11] - 2025-10-04
+
+### Critical Bug Fix: Inverted IRQ Mask Assignment 🐛
+
+### ROOT CAUSE: Port 2 RX Failure Due to Wrong Interrupt Mask
+- **Problem**: Port 2 completely non-functional - no packets received on Wireshark
+- **Location**: `adin1110_net_stop()` line 1022 - IRQ mask assignment was backwards
+- **Impact**: Port 1 worked, Port 2 failed completely in dual interface mode
+
+### The Fatal Bug
+**Broken Code:**
+```c
+mask = !port_priv->nr ? ADIN2111_RX_RDY_IRQ : ADIN1110_RX_RDY_IRQ;
+//     Port 0?          BIT(17) - Port 2    BIT(4) - Port 1
+//                      WRONG!               WRONG!
+```
+
+**Fixed Code:**
+```c
+mask = !port_priv->nr ? ADIN1110_RX_RDY_IRQ : ADIN2111_RX_RDY_IRQ;
+//     Port 0?          BIT(4) - Port 1     BIT(17) - Port 2
+//                      CORRECT!            CORRECT!
+```
+
+### Hardware Register Mapping
+- **Port 1** (nr=0): Uses `ADIN1110_RX_RDY_IRQ` (BIT 4)
+- **Port 2** (nr=1): Uses `ADIN2111_RX_RDY_IRQ` (BIT 17)
+- **Bug**: Ternary operator had these values swapped
+
+### Why This Bug Survived So Long
+1. All testing focused on Port 1 (which worked by accident)
+2. Single interface mode masked the dual-port IRQ issue
+3. Phase 10 critical fix overshadowed this subtle bug
+4. Bug only manifests when interfaces are stopped/restarted
+
+### Technical Impact
+- ✅ **Port 2 RX now functional** - Proper IRQ mask during interface stop
+- ✅ **Dual interface mode fixed** - Both eth0 and eth1 work correctly
+- ✅ **IRQ management corrected** - Each port disables its own interrupt
+- ✅ **No regression** - Port 1 continues working as before
+
+This completes the IRQ handling fix that enables true dual-port operation.
+
 ## [3.0.7-critical-fix] - 2025-09-06
 
 ### CRITICAL: Dual Interface Mode Restored 🚨
